@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -24,21 +25,28 @@ export default function LoginPage() {
           Welcome to <span className="gradient-text">Zautomeal</span>
         </h1>
         <p style={{ color: 'var(--brand-muted)', fontSize: 14, marginBottom: 36, lineHeight: 1.6 }}>
-          Sign in to start automating your Swiggy orders on a schedule.
+          Sign in to start automating your Swiggy orders and grocery deliveries on a schedule.
         </p>
 
         {/* Google Sign In */}
-        <button style={{
-          width: '100%', padding: '14px', borderRadius: 14,
-          background: '#fff', color: '#111', fontWeight: 600, fontSize: 15,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          border: 'none', cursor: 'pointer', marginBottom: 12,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          transition: 'transform 0.2s',
-        }}
-          onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
-          onMouseLeave={e => (e.currentTarget.style.transform = 'none')}
+        <button
           onClick={() => alert('Google OAuth — connect NextAuth.js here')}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 14,
+            background: '#fff', color: '#111', fontWeight: 600, fontSize: 15,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            border: 'none', cursor: 'pointer', marginBottom: 12,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 28px rgba(0,0,0,0.4)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+          }}
         >
           <svg width="20" height="20" viewBox="0 0 48 48">
             <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.1-2.7-.4-4z"/>
