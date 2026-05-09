@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ────────────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?
+  name         String?
+  avatarUrl    String?
+  swiggyToken  String?  // Encrypted Swiggy API token
+  fcmToken     String?  // Firebase push token
+  plan         Plan     @default(FREE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  addresses     Address[]
+  schedules     Schedule[]
+  orders        Order[]
+  notifications Notification[]
+  subscription  Subscription?
+  skipRecords   SkipRecord[]
+}
+
+// ─── Addresses ────────────────────────────────────────────
+model Address {
+  id              String   @id @default(cuid())
+  userId          String
+  label           String   // "Home", "Office"
+  swiggyAddressId String?
+  lat             Float?
+  lng             Float?
+  fullAddress     String
+  createdAt       DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedules Schedule[]
+}
+
+// ─── Schedules ────────────────────────────────────────────
+model Schedule {
+  id             String   @id @default(cuid())
+  userId         String
+  addressId      String
+  restaurantId   String
+  restaurantName String
+  items          Json     // Array of { id, name, price }
+  cronExpression String   // e.g. "0 13 * * 1-5"
+  timezone       String   @default("Asia/Kolkata")
+  label          String?  // "Work Lunch"
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address     Address      @relation(fields: [addressId], references: [id])
+  orders      Order[]
+  skipRecords SkipRecord[]
+}
+
+// ─── Skip Records ─────────────────────────────────────────
+model SkipRecord {
+  id         String   @id @default(cuid())
+  scheduleId String
+  userId     String
+  date       DateTime // The date that was skipped
+  createdAt  DateTime @default(now())
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Orders ───────────────────────────────────────────────
+model Order {
+  id            String      @id @default(cuid())
+  scheduleId    String?
+  userId        String
+  swiggyOrderId String?
+  status        OrderStatus @default(PLACED)
+  amount        Float
+  items         Json
+  restaurantName String
+  placedAt      DateTime    @default(now())
+  deliveredAt   DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule Schedule? @relation(fields: [scheduleId], references: [id])
+}
+
+// ─── Notifications ────────────────────────────────────────
+model Notification {
+  id           String              @id @default(cuid())
+  userId       String
+  scheduleId   String?
+  message      String
+  channel      NotificationChannel @default(FCM)
+  userResponse UserResponse?
+  sentAt       DateTime            @default(now())
+  respondedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Subscriptions ────────────────────────────────────────
+model Subscription {
+  id                String             @id @default(cuid())
+  userId            String             @unique
+  plan              Plan
+  status            SubscriptionStatus @default(ACTIVE)
+  razorpaySubId     String?
+  stripeSubId       String?
+  currentPeriodEnd  DateTime?
+  createdAt         DateTime           @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Enums ────────────────────────────────────────────────
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  PREMIUM
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  FCM
+  SMS
+  EMAIL
+}
+
+enum UserResponse {
+  CONFIRMED
+  SKIPPED
+  RESCHEDULED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  EXPIRED
+}
