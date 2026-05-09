@@ -49,30 +49,154 @@ If RESCHEDULE → User picks new time/date
 ## 🧱 Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      ZAUTOMEAL                          │
-│                                                         │
-│  ┌──────────┐   ┌──────────────┐   ┌────────────────┐  │
-│  │  Next.js │   │  FastAPI /   │   │  Swiggy Builder│  │
-│  │ Frontend │◄──│  Node.js API │──►│      API       │  │
-│  │ (React)  │   │   Backend    │   └────────────────┘  │
-│  └──────────┘   └──────┬───────┘                       │
-│                         │                               │
-│             ┌───────────▼──────────┐                   │
-│             │   Scheduler Engine   │                   │
-│             │  (BullMQ + Redis)    │                   │
-│             └───────────┬──────────┘                   │
-│                         │                              │
-│        ┌────────────────┼───────────────┐              │
-│        ▼                ▼               ▼              │
-│  ┌──────────┐   ┌──────────────┐  ┌──────────┐        │
-│  │Notification│  │   AI Agent   │  │  Stripe/ │        │
-│  │  Service  │  │ (Gemini API) │  │Razorpay  │        │
-│  │(FCM/Twilio│  │ Smart Reco   │  │ Payments │        │
-│  │/WhatsApp) │  └──────────────┘  └──────────┘        │
-│  └──────────┘                                          │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                         ZAUTOMEAL                            │
+│                                                              │
+│  ┌──────────┐   ┌───────────────┐   ┌─────────────────────┐ │
+│  │  Next.js │   │  Node.js API  │   │  Swiggy Builder API │ │
+│  │ Frontend │◄──│  + Express    │──►│  (Orders/Menu/Auth) │ │
+│  │ (React)  │   │               │   └─────────────────────┘ │
+│  └──────────┘   └──────┬────────┘                           │
+│                          │                                   │
+│              ┌───────────▼───────────┐                      │
+│              │    Scheduler Engine   │                      │
+│              │   (BullMQ + Redis)    │                      │
+│              └───────────┬───────────┘                      │
+│                          │                                   │
+│              ┌───────────▼───────────┐                      │
+│              │   🔌 MCP Server Layer  │                      │
+│              │  (Model Context Proto) │                      │
+│              │  Tools exposed to AI:  │                      │
+│              │  • place_order()       │                      │
+│              │  • check_menu()        │                      │
+│              │  • get_schedule()      │                      │
+│              │  • send_notification() │                      │
+│              │  • reschedule()        │                      │
+│              └───────────┬───────────┘                      │
+│                          │                                   │
+│         ┌────────────────▼────────────────┐                 │
+│         │        Gemini AI Agent           │                 │
+│         │  (Reads context via MCP tools,   │                 │
+│         │   calls tools to act on world)   │                 │
+│         └────────────────┬────────────────┘                 │
+│                          │                                   │
+│        ┌─────────────────┼──────────────────┐               │
+│        ▼                 ▼                  ▼               │
+│  ┌──────────┐   ┌──────────────┐   ┌──────────────┐        │
+│  │Notification│  │  PostgreSQL  │   │  Stripe /    │        │
+│  │  Service  │  │  (Supabase)  │   │  Razorpay    │        │
+│  │(FCM/WA/   │  │              │   │  Payments    │        │
+│  │ Twilio)   │  └──────────────┘   └──────────────┘        │
+│  └──────────┘                                               │
+└──────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🔌 MCP (Model Context Protocol) Integration
+
+### What is MCP?
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard that lets AI models (like Gemini) interact with **external tools, APIs, and data sources** in a structured, standardized way — like a USB-C port for AI integrations.
+
+Instead of hardcoding API calls inside the AI logic, MCP exposes capabilities as **named tools** the AI can discover and call at runtime, with typed inputs/outputs and clear descriptions.
+
+---
+
+### How Zautomeal Uses MCP
+
+The **Gemini AI Agent** at the heart of Zautomeal does not directly call Swiggy's API or touch the database. Instead, it communicates exclusively through the **Zautomeal MCP Server** — a thin adapter layer that translates AI tool calls into real backend actions.
+
+```
+User: "Skip lunch tomorrow and move it to 3 PM"
+         ↓
+  Gemini Agent reasons about intent
+         ↓
+  Calls MCP tool: get_schedule({ userId, date: 'tomorrow', meal: 'lunch' })
+         ↓
+  MCP Server queries Supabase → returns schedule data
+         ↓
+  Agent calls MCP tool: reschedule({ scheduleId, newTime: '15:00' })
+         ↓
+  MCP Server updates DB + re-queues BullMQ job
+         ↓
+  Agent calls MCP tool: send_notification({ userId, message: 'Done! Rescheduled to 3 PM.' })
+         ↓
+  MCP Server fires WhatsApp/FCM message
+```
+
+---
+
+### MCP Server: Exposed Tools
+
+| Tool Name | Description | Inputs | Returns |
+|-----------|-------------|--------|---------|
+| `get_schedule` | Fetch user's meal schedule | `userId`, `date`, `meal` | Schedule object |
+| `place_order` | Trigger order via Swiggy Builder API | `scheduleId`, `userId` | `orderId`, status |
+| `check_menu` | Check if items are available at restaurant | `restaurantId`, `itemIds[]` | Availability map |
+| `reschedule` | Update schedule time in DB + re-queue job | `scheduleId`, `newTime` | Updated schedule |
+| `skip_today` | Mark a schedule as skipped for today | `scheduleId`, `date` | Confirmation |
+| `send_notification` | Send message to user on preferred channel | `userId`, `message`, `channel?` | Delivery status |
+| `get_order_history` | Retrieve past orders for a user | `userId`, `limit` | Orders array |
+| `get_budget_status` | Check spending vs user's set budget | `userId`, `period` | Budget summary |
+| `suggest_meal` | AI picks an alternate meal from past patterns | `userId`, `mealType` | Suggested items |
+
+---
+
+### MCP Server Implementation
+
+Zautomeal runs its own lightweight **MCP Server** built with the official [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk):
+
+```
+apps/
+└── mcp-server/
+    ├── index.ts              # MCP server entrypoint
+    ├── tools/
+    │   ├── schedule.tool.ts  # get_schedule, reschedule, skip_today
+    │   ├── order.tool.ts     # place_order, get_order_history
+    │   ├── menu.tool.ts      # check_menu, suggest_meal
+    │   ├── notify.tool.ts    # send_notification
+    │   └── budget.tool.ts    # get_budget_status
+    └── transport/
+        └── stdio.ts          # Stdio transport (local) or HTTP/SSE (prod)
+```
+
+**Sample tool definition (`order.tool.ts`):**
+```typescript
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+
+export function registerOrderTools(server: McpServer) {
+  server.tool(
+    'place_order',
+    'Places a Swiggy order for the given schedule on behalf of the user.',
+    {
+      scheduleId: z.string().describe('The schedule ID to execute'),
+      userId:     z.string().describe('The user placing the order'),
+    },
+    async ({ scheduleId, userId }) => {
+      const schedule = await db.schedules.findById(scheduleId);
+      const result   = await swiggyService.placeOrder(schedule, userId);
+      return {
+        content: [{ type: 'text', text: `Order placed! ID: ${result.orderId}` }],
+      };
+    }
+  );
+}
+```
+
+---
+
+### Why MCP vs. Direct API Calls?
+
+| Approach | Direct API Calls | MCP Tool Layer |
+|----------|-----------------|----------------|
+| Agent knows about internals | ✅ Yes (tightly coupled) | ❌ No (clean separation) |
+| Swap backend without touching AI logic | ❌ Hard | ✅ Easy |
+| Composable multi-step reasoning | ❌ Limited | ✅ Native |
+| Tool discovery at runtime | ❌ No | ✅ Yes |
+| Works across AI models | ❌ No | ✅ Yes (MCP standard) |
+| Audit log of AI actions | ❌ Manual | ✅ Built-in via MCP |
 
 ---
 
@@ -105,8 +229,9 @@ If RESCHEDULE → User picks new time/date
 ### AI / Automation Agent
 | Tech | Purpose |
 |------|---------|
-| **Google Gemini API** | Smart meal recommendations, NLP for preferences |
-| **LangChain.js** | Agent orchestration |
+| **Google Gemini API** (`gemini-1.5-flash`) | Core LLM — meal suggestions, NLP, rescheduling |
+| **MCP (`@modelcontextprotocol/sdk`)** | Bridges AI agent ↔ Swiggy API / DB / Notifs |
+| **LangChain.js** | Agent loop orchestration & memory |
 | **BullMQ Delayed Jobs** | Precise order-time scheduling |
 
 ### Notifications
