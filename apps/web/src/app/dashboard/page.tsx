@@ -32,8 +32,9 @@ export default function DashboardPage() {
           🍽️ <span className="gradient-text">Zautomeal</span>
         </div>
         {[
-          { href: '/dashboard',         icon: '🏠', label: 'Dashboard' },
-          { href: '/dashboard/schedules', icon: '📅', label: 'Schedules' },
+          { href: '/dashboard',           icon: '🏠', label: 'Dashboard' },
+          { href: '/dashboard/schedules', icon: '📅', label: 'Meal Schedules' },
+          { href: '/dashboard/groceries', icon: '🛒', label: 'Groceries' },
           { href: '/dashboard/history',   icon: '🕐', label: 'Order History' },
           { href: '/dashboard/billing',   icon: '💳', label: 'Billing' },
           { href: '/dashboard/settings',  icon: '⚙️', label: 'Settings' },

@@ -1,19 +1,28 @@
+'use client';
 import Link from 'next/link';
 
 export default function LandingPage() {
   const features = [
     { icon: '⏰', title: 'Set it once', desc: 'Define your meal schedule with restaurant, items, and timing. Never think about it again.' },
     { icon: '🔔', title: '1-hour alert', desc: 'Get a WhatsApp or push notification before every order. Confirm, skip, or reschedule with one tap.' },
-    { icon: '🤖', title: 'AI-powered', desc: 'Gemini AI understands natural commands: "Skip lunch Friday and add a snack at 4 PM".' },
-    { icon: '💰', title: 'Budget tracker', desc: 'Set a weekly food budget. Get warned before you overspend.' },
+    { icon: '🛒', title: 'Monthly Groceries', desc: 'Schedule your full grocery basket for weekly or monthly auto-delivery via Swiggy Instamart. Never run out of essentials.' },
+    { icon: '🤖', title: 'AI-powered', desc: 'Gemini AI understands natural commands: "Skip lunch Friday" or "Add milk to my weekly grocery list".' },
+    { icon: '💰', title: 'Budget tracker', desc: 'Set separate budgets for meals and groceries. Get warned before you overspend on either.' },
     { icon: '🌦️', title: 'Weather-aware', desc: 'Suggests adjusted timing on rainy days when delivery takes longer.' },
-    { icon: '👨‍👩‍👧', title: 'Family mode', desc: 'Manage meal schedules for everyone in the family from one dashboard.' },
+    { icon: '👨‍👩‍👧', title: 'Family mode', desc: 'Manage meal & grocery schedules for everyone in the family from one dashboard.' },
+    { icon: '📦', title: 'Smart restocking', desc: 'AI tracks your grocery consumption patterns and auto-adjusts quantities each month.' },
   ];
 
   const plans = [
-    { name: 'Free',    price: '₹0',   period: '/month', features: ['1 meal/day', 'Push notifications', 'Basic history'],         cta: 'Get Started',    highlight: false },
-    { name: 'Pro',     price: '₹199', period: '/month', features: ['Unlimited meals', 'WhatsApp alerts', 'AI suggestions', 'Multi-address', 'Budget tracker'], cta: 'Go Pro', highlight: true },
-    { name: 'Premium', price: '₹399', period: '/month', features: ['Everything in Pro', 'Family mode', 'Priority support', 'Custom rules'],  cta: 'Go Premium', highlight: false },
+    { name: 'Free',    price: '₹0',   period: '/month', features: ['1 meal/day', 'Push notifications', 'Basic history'],  cta: 'Get Started', highlight: false },
+    { name: 'Starter', price: '₹99',  period: '/month', features: ['3 meals/day', 'WhatsApp alerts', '1 grocery schedule (monthly)', '30-day history'], cta: 'Get Starter', highlight: false },
+    { name: 'Pro',     price: '₹199', period: '/month', features: ['Unlimited meals', 'Unlimited grocery schedules', 'Weekly & monthly delivery', 'AI suggestions', 'Budget tracker', 'Multi-address'], cta: 'Go Pro', highlight: true },
+    { name: 'Premium', price: '₹399', period: '/month', features: ['Everything in Pro', 'Family mode (5 members)', 'Smart restocking AI', 'Priority support', 'Custom rules'], cta: 'Go Premium', highlight: false },
+  ];
+
+  const tabs = [
+    { label: '🍽️ Meals', active: true },
+    { label: '🛒 Groceries', active: false },
   ];
 
   return (
@@ -22,9 +31,10 @@ export default function LandingPage() {
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '18px 48px',
-        background: 'rgba(10,10,15,0.8)', backdropFilter: 'blur(20px)',
+        padding: '16px 48px',
+        background: 'rgba(10,10,15,0.85)', backdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--brand-border)',
+        gap: 16,
       }}>
         <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 22 }}>
           🍽️ <span className="gradient-text">Zautomeal</span>
