@@ -211,7 +211,7 @@ export default function NewSchedulePage() {
             </div>
             <div className="glass" style={{ borderRadius: 18, padding: '24px' }}>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Alert Before Order</div>
-              <select value={form.alertBefore} onChange={e => setForm(f => ({ ...f, alertBefore: e.target.value }))} style={{ ...inputStyle, cursor: 'pointer' }}>
+              <select value={form.alertBefore} onChange={e => setForm(f => ({ ...f, alertBefore: e.target.value }))} style={{ marginBottom: 0 }}>
                 <option value="30">30 minutes before</option>
                 <option value="60">1 hour before</option>
                 <option value="120">2 hours before</option>
@@ -220,7 +220,7 @@ export default function NewSchedulePage() {
             </div>
             <div className="glass" style={{ borderRadius: 18, padding: '24px' }}>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Timezone</div>
-              <select value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} style={{ ...inputStyle, cursor: 'pointer' }}>
+              <select value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} style={{ marginBottom: 0 }}>
                 <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
                 <option value="Asia/Dubai">Asia/Dubai (GST +4:00)</option>
                 <option value="America/New_York">America/New_York (EST)</option>

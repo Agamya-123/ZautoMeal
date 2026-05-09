@@ -86,7 +86,7 @@ export default function SettingsPage() {
             <input value={phone} onChange={e => setPhone(e.target.value)} style={inputStyle} type="tel" />
           </Field>
           <Field label="Timezone">
-            <select style={{ ...inputStyle, cursor: 'pointer' }}>
+            <select style={{ marginBottom: 0 }}>
               <option>Asia/Kolkata (IST +5:30)</option>
               <option>Asia/Kolkata (IST +5:30)</option>
             </select>
@@ -108,7 +108,7 @@ export default function SettingsPage() {
 
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--brand-border)' }}>
           <Field label="Alert Lead Time (minutes before order)">
-            <select value={alertTime} onChange={e => setAlertTime(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+            <select value={alertTime} onChange={e => setAlertTime(e.target.value)} style={{ marginBottom: 0 }}>
               <option value="30">30 minutes before</option>
               <option value="60">1 hour before</option>
               <option value="120">2 hours before</option>
