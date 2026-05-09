@@ -52,7 +52,7 @@ export default function SchedulesPage() {
           <h1 style={{marginBottom:4}}>Meal Schedules</h1>
           <p style={{fontSize:13}}>Automate your meals — orders placed automatically on your schedule.</p>
         </div>
-        <Link href="/dashboard/schedules/new" className="btn btn-primary"><IcPlus/> New Schedule</Link>
+        <Link href="/dashboard/schedules/new" className="btn btn-primary"><IcPlus/> New Meal Schedule</Link>
       </div>
 
       {/* Stats */}
