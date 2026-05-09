@@ -28,21 +28,11 @@ If RESCHEDULE → User picks new time/date
 
 ## 🏷️ Project Name: **Zautomeal**
 
-| Name | Meaning |
-|------|---------|
-| **Z** | Zero effort (you do nothing after setup) |
-| **auto** | Automated, always running |
-| **meal** | Food, the core purpose |
-
-**Alternative names considered:**
-- `Plateloop` — meals on loop
-- `ForkBot` — too robotic
-- `Mealcron` — developer-y, niche
-
-**Winner: `Zautomeal`** — catchy, memorable, brandable, not AI-buzzwordy.
-
-**Repo name:** `zautomeal`
-**Domain suggestion:** `zautomeal.in` / `zautomeal.app`
+| Name           | Meaning                                  |
+| -------------- | ---------------------------------------- |
+| **Z**    | Zero effort (you do nothing after setup) |
+| **auto** | Automated, always running                |
+| **meal** | Food, the core purpose                   |
 
 ---
 
@@ -129,17 +119,17 @@ User: "Skip lunch tomorrow and move it to 3 PM"
 
 ### MCP Server: Exposed Tools
 
-| Tool Name | Description | Inputs | Returns |
-|-----------|-------------|--------|---------|
-| `get_schedule` | Fetch user's meal schedule | `userId`, `date`, `meal` | Schedule object |
-| `place_order` | Trigger order via Swiggy Builder API | `scheduleId`, `userId` | `orderId`, status |
-| `check_menu` | Check if items are available at restaurant | `restaurantId`, `itemIds[]` | Availability map |
-| `reschedule` | Update schedule time in DB + re-queue job | `scheduleId`, `newTime` | Updated schedule |
-| `skip_today` | Mark a schedule as skipped for today | `scheduleId`, `date` | Confirmation |
-| `send_notification` | Send message to user on preferred channel | `userId`, `message`, `channel?` | Delivery status |
-| `get_order_history` | Retrieve past orders for a user | `userId`, `limit` | Orders array |
-| `get_budget_status` | Check spending vs user's set budget | `userId`, `period` | Budget summary |
-| `suggest_meal` | AI picks an alternate meal from past patterns | `userId`, `mealType` | Suggested items |
+| Tool Name             | Description                                   | Inputs                                | Returns             |
+| --------------------- | --------------------------------------------- | ------------------------------------- | ------------------- |
+| `get_schedule`      | Fetch user's meal schedule                    | `userId`, `date`, `meal`        | Schedule object     |
+| `place_order`       | Trigger order via Swiggy Builder API          | `scheduleId`, `userId`            | `orderId`, status |
+| `check_menu`        | Check if items are available at restaurant    | `restaurantId`, `itemIds[]`       | Availability map    |
+| `reschedule`        | Update schedule time in DB + re-queue job     | `scheduleId`, `newTime`           | Updated schedule    |
+| `skip_today`        | Mark a schedule as skipped for today          | `scheduleId`, `date`              | Confirmation        |
+| `send_notification` | Send message to user on preferred channel     | `userId`, `message`, `channel?` | Delivery status     |
+| `get_order_history` | Retrieve past orders for a user               | `userId`, `limit`                 | Orders array        |
+| `get_budget_status` | Check spending vs user's set budget           | `userId`, `period`                | Budget summary      |
+| `suggest_meal`      | AI picks an alternate meal from past patterns | `userId`, `mealType`              | Suggested items     |
 
 ---
 
@@ -162,6 +152,7 @@ apps/
 ```
 
 **Sample tool definition (`order.tool.ts`):**
+
 ```typescript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
@@ -189,92 +180,100 @@ export function registerOrderTools(server: McpServer) {
 
 ### Why MCP vs. Direct API Calls?
 
-| Approach | Direct API Calls | MCP Tool Layer |
-|----------|-----------------|----------------|
-| Agent knows about internals | ✅ Yes (tightly coupled) | ❌ No (clean separation) |
-| Swap backend without touching AI logic | ❌ Hard | ✅ Easy |
-| Composable multi-step reasoning | ❌ Limited | ✅ Native |
-| Tool discovery at runtime | ❌ No | ✅ Yes |
-| Works across AI models | ❌ No | ✅ Yes (MCP standard) |
-| Audit log of AI actions | ❌ Manual | ✅ Built-in via MCP |
+| Approach                               | Direct API Calls         | MCP Tool Layer           |
+| -------------------------------------- | ------------------------ | ------------------------ |
+| Agent knows about internals            | ✅ Yes (tightly coupled) | ❌ No (clean separation) |
+| Swap backend without touching AI logic | ❌ Hard                  | ✅ Easy                  |
+| Composable multi-step reasoning        | ❌ Limited               | ✅ Native                |
+| Tool discovery at runtime              | ❌ No                    | ✅ Yes                   |
+| Works across AI models                 | ❌ No                    | ✅ Yes (MCP standard)    |
+| Audit log of AI actions                | ❌ Manual                | ✅ Built-in via MCP      |
 
 ---
 
 ## 🛠️ Full Tech Stack
 
 ### Frontend
-| Tech | Purpose |
-|------|---------|
-| **Next.js 14** (App Router) | Main web app with SSR |
-| **React 18** | UI components |
-| **Framer Motion** | Animations & micro-interactions |
-| **Tailwind CSS** | Styling |
-| **ShadCN UI** | Component library |
-| **React Query (TanStack)** | Data fetching & caching |
-| **Zustand** | Global state management |
-| **PWA (next-pwa)** | Mobile app-like experience |
+
+| Tech                              | Purpose                         |
+| --------------------------------- | ------------------------------- |
+| **Next.js 14** (App Router) | Main web app with SSR           |
+| **React 18**                | UI components                   |
+| **Framer Motion**           | Animations & micro-interactions |
+| **Tailwind CSS**            | Styling                         |
+| **ShadCN UI**               | Component library               |
+| **React Query (TanStack)**  | Data fetching & caching         |
+| **Zustand**                 | Global state management         |
+| **PWA (next-pwa)**          | Mobile app-like experience      |
 
 ### Backend
-| Tech | Purpose |
-|------|---------|
-| **Node.js + Express** OR **FastAPI (Python)** | REST API server |
-| **BullMQ** | Job queue for scheduled orders |
-| **Redis** | Queue backend + caching |
-| **PostgreSQL** (via Supabase) | Main database |
-| **Prisma ORM** | Database access layer |
-| **JWT + OAuth2** | Auth (Google Sign-In) |
+
+| Tech                                                      | Purpose                        |
+| --------------------------------------------------------- | ------------------------------ |
+| **Node.js + Express** OR **FastAPI (Python)** | REST API server                |
+| **BullMQ**                                          | Job queue for scheduled orders |
+| **Redis**                                           | Queue backend + caching        |
+| **PostgreSQL** (via Supabase)                       | Main database                  |
+| **Prisma ORM**                                      | Database access layer          |
+| **JWT + OAuth2**                                    | Auth (Google Sign-In)          |
 
 > **Recommendation:** Use **Node.js + Express** for a full-JS stack. Use **FastAPI** if you want async Python for the AI agent logic.
 
 ### AI / Automation Agent
-| Tech | Purpose |
-|------|---------|
+
+| Tech                                               | Purpose                                         |
+| -------------------------------------------------- | ----------------------------------------------- |
 | **Google Gemini API** (`gemini-1.5-flash`) | Core LLM — meal suggestions, NLP, rescheduling |
-| **MCP (`@modelcontextprotocol/sdk`)** | Bridges AI agent ↔ Swiggy API / DB / Notifs |
-| **LangChain.js** | Agent loop orchestration & memory |
-| **BullMQ Delayed Jobs** | Precise order-time scheduling |
+| **MCP (`@modelcontextprotocol/sdk`)**      | Bridges AI agent ↔ Swiggy API / DB / Notifs    |
+| **LangChain.js**                             | Agent loop orchestration & memory               |
+| **BullMQ Delayed Jobs**                      | Precise order-time scheduling                   |
 
 ### Notifications
-| Tech | Purpose |
-|------|---------|
-| **Firebase Cloud Messaging (FCM)** | Push notifications (web + mobile) |
-| **Twilio** | SMS fallback |
-| **WhatsApp Business API** | WhatsApp messages (via 360dialog / Twilio) |
-| **Nodemailer / Resend** | Email confirmations |
+
+| Tech                                     | Purpose                                    |
+| ---------------------------------------- | ------------------------------------------ |
+| **Firebase Cloud Messaging (FCM)** | Push notifications (web + mobile)          |
+| **Twilio**                         | SMS fallback                               |
+| **WhatsApp Business API**          | WhatsApp messages (via 360dialog / Twilio) |
+| **Nodemailer / Resend**            | Email confirmations                        |
 
 ### Payments
-| Tech | Purpose |
-|------|---------|
-| **Stripe** | Subscription billing (international) |
+
+| Tech               | Purpose                                |
+| ------------------ | -------------------------------------- |
+| **Stripe**   | Subscription billing (international)   |
 | **Razorpay** | Indian users (UPI, Cards, Net Banking) |
 
 ### DevOps / Infrastructure
-| Tech | Purpose |
-|------|---------|
-| **Docker + Docker Compose** | Local & production containerization |
-| **Railway / Render** | Backend hosting (free tier available) |
-| **Vercel** | Frontend hosting |
-| **Supabase** | Postgres DB + Auth + Realtime |
-| **Upstash Redis** | Serverless Redis for BullMQ |
-| **GitHub Actions** | CI/CD pipeline |
+
+| Tech                              | Purpose                               |
+| --------------------------------- | ------------------------------------- |
+| **Docker + Docker Compose** | Local & production containerization   |
+| **Railway / Render**        | Backend hosting (free tier available) |
+| **Vercel**                  | Frontend hosting                      |
+| **Supabase**                | Postgres DB + Auth + Realtime         |
+| **Upstash Redis**           | Serverless Redis for BullMQ           |
+| **GitHub Actions**          | CI/CD pipeline                        |
 
 ---
 
 ## 🔑 API & Token Cost Estimates
 
 ### Swiggy Builder API
+
 - **Access:** Free via Swiggy Partner/Builder program
 - **Rate Limits:** Varies per plan (typically 1,000 req/min for starter)
 - **Cost:** ₹0 upfront (commission-based model; Swiggy takes a % per order)
-- **Apply at:** [https://www.swiggy.com/swiggy-builder](https://www.swiggy.com/swiggy-builder)
 
 ### Google Gemini API (AI Agent)
-| Model | Input | Output | Use Case |
-|-------|-------|--------|---------|
-| `gemini-1.5-flash` | $0.075/1M tokens | $0.30/1M tokens | Meal suggestions, NLP parsing |
-| `gemini-1.5-pro` | $3.50/1M tokens | $10.50/1M tokens | Complex reasoning, advanced agent |
+
+| Model                | Input                              | Output                            | Use Case |
+| -------------------- | ---------------------------------- | --------------------------------- | -------- |
+| `gemini-1.5-flash` | $0.075/1M tokens | $0.30/1M tokens | Meal suggestions, NLP parsing     |          |
+| `gemini-1.5-pro`   | $3.50/1M tokens | $10.50/1M tokens | Complex reasoning, advanced agent |          |
 
 **Estimated tokens per user/month:**
+
 - Schedule setup + parsing: ~500 tokens
 - Daily meal suggestion: ~200 tokens × 30 = 6,000 tokens
 - Rescheduling NLP: ~300 tokens × avg 5 times = 1,500 tokens
@@ -284,12 +283,13 @@ export function registerOrderTools(server: McpServer) {
 **At 1,000 active users:** ~$1–$2/month on Gemini Flash
 
 ### Notification Costs (per 1,000 users/month)
-| Service | Cost |
-|---------|------|
-| FCM Push | **Free** |
-| Twilio SMS | ~$0.0075/msg → ~₹0.6/msg |
-| WhatsApp (360dialog) | ~€0.005/message |
-| Email (Resend.com) | Free up to 3,000/month |
+
+| Service              | Cost                       |
+| -------------------- | -------------------------- |
+| FCM Push             | **Free**             |
+| Twilio SMS           | ~$0.0075/msg → ~₹0.6/msg |
+| WhatsApp (360dialog) | ~€0.005/message           |
+| Email (Resend.com)   | Free up to 3,000/month     |
 
 ---
 
@@ -297,14 +297,15 @@ export function registerOrderTools(server: McpServer) {
 
 ### Pricing Tiers
 
-| Plan | Price | Features |
-|------|-------|---------|
-| **Free** | ₹0/month | 1 scheduled meal/day, basic push notifications |
-| **Starter** | ₹99/month | 3 meals/day, WhatsApp alerts, 7-day history |
-| **Pro** | ₹199/month | Unlimited meals, AI suggestions, multi-address, family mode |
-| **Premium** | ₹399/month | Priority support, custom rules, meal budget tracker |
+| Plan              | Price       | Features                                                    |
+| ----------------- | ----------- | ----------------------------------------------------------- |
+| **Free**    | ₹0/month   | 1 scheduled meal/day, basic push notifications              |
+| **Starter** | ₹99/month  | 3 meals/day, WhatsApp alerts, 7-day history                 |
+| **Pro**     | ₹199/month | Unlimited meals, AI suggestions, multi-address, family mode |
+| **Premium** | ₹399/month | Priority support, custom rules, meal budget tracker         |
 
 ### Revenue Estimate (1,000 paid users at blended ₹150/month)
+
 - **Monthly Recurring Revenue (MRR):** ₹1,50,000
 - **Annual:** ₹18,00,000
 - **Less infra (~₹5,000/month):** marginal cost
@@ -418,6 +419,7 @@ subscriptions (id, user_id, plan, stripe_sub_id, status,
 ## 🗺️ Development Roadmap
 
 ### Phase 1 — MVP (4–6 weeks)
+
 - [ ] Swiggy Builder API integration & auth flow
 - [ ] User onboarding (address, meal preference)
 - [ ] Basic schedule creation (cron-based)
@@ -426,18 +428,21 @@ subscriptions (id, user_id, plan, stripe_sub_id, status,
 - [ ] Auto-order placement
 
 ### Phase 2 — Payments & Polish (2–3 weeks)
+
 - [ ] Razorpay subscription integration
 - [ ] Subscription gating (free vs paid limits)
 - [ ] Order history & dashboard
 - [ ] WhatsApp notifications
 
 ### Phase 3 — AI Agent (3–4 weeks)
+
 - [ ] Gemini API integration for meal suggestions
 - [ ] Natural language rescheduling ("skip next Monday")
 - [ ] Budget tracker
 - [ ] Menu availability check before ordering
 
 ### Phase 4 — Scale & Growth
+
 - [ ] Mobile app (React Native / Expo)
 - [ ] Referral program
 - [ ] Family/group meal plans
@@ -449,17 +454,20 @@ subscriptions (id, user_id, plan, stripe_sub_id, status,
 ## ⚠️ Important Considerations
 
 ### Legal / API Terms
+
 - Verify Swiggy Builder API's **Terms of Service** for automated ordering — confirm it is explicitly allowed for third-party automation
 - Implement **user consent** explicitly: users must authorize Zautomeal to place orders on their behalf
 - Store **no payment card data** — delegate entirely to Swiggy's payment flow
 
 ### Technical Risks
+
 - **Swiggy API rate limits** — implement exponential backoff and queue-based ordering
 - **Menu/restaurant unavailability** — always check item availability before queuing
 - **Delivery time windows** — validate that the restaurant is open at scheduled time
 - **Order failure handling** — retry logic + user notification on failure
 
 ### Security
+
 - Encrypt all Swiggy tokens at rest (AES-256)
 - Use short-lived JWT tokens
 - Implement 2FA for billing/subscription changes
@@ -495,16 +503,16 @@ npm run dev  # starts web + api concurrently
 
 ## 🌟 What Makes Zautomeal Unique
 
-| Feature | Competitors | Zautomeal |
-|---------|-------------|-----------|
-| Scheduled recurring orders | ❌ | ✅ |
-| 1-hour confirm/skip/reschedule | ❌ | ✅ |
-| AI rescheduling via natural language | ❌ | ✅ |
-| Budget tracking & alerts | ❌ | ✅ |
-| WhatsApp-native interaction flow | ❌ | ✅ |
-| Menu availability guard before order | ❌ | ✅ |
-| Weather-aware timing suggestions | ❌ | ✅ |
-| Family meal plans | ❌ | ✅ (Phase 4) |
+| Feature                              | Competitors | Zautomeal    |
+| ------------------------------------ | ----------- | ------------ |
+| Scheduled recurring orders           | ❌          | ✅           |
+| 1-hour confirm/skip/reschedule       | ❌          | ✅           |
+| AI rescheduling via natural language | ❌          | ✅           |
+| Budget tracking & alerts             | ❌          | ✅           |
+| WhatsApp-native interaction flow     | ❌          | ✅           |
+| Menu availability guard before order | ❌          | ✅           |
+| Weather-aware timing suggestions     | ❌          | ✅           |
+| Family meal plans                    | ❌          | ✅ (Phase 4) |
 
 ---
 
