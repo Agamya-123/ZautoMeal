@@ -15,7 +15,7 @@ export default function SchedulesPage() {
   const monthlyEst  = schedules.filter(s => s.status === 'active').reduce((sum, s) => sum + s.amount * 20, 0);
 
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '36px 40px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 26 }}>📅 Meal Schedules</h1>

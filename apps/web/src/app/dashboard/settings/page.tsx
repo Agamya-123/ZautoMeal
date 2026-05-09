@@ -62,7 +62,7 @@ export default function SettingsPage() {
   );
 
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 720, margin: '0 auto' }}>
+    <div style={{ padding: '36px 40px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 26 }}>⚙️ Settings</h1>

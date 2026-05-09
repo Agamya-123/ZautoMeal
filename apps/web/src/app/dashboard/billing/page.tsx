@@ -19,7 +19,7 @@ export default function BillingPage() {
   const totalSpend = usage.meals.spend + usage.groceries.spend;
 
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '36px 40px' }}>
       <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 26, marginBottom: 6 }}>💳 Billing & Plans</h1>
       <p style={{ color: 'var(--brand-muted)', fontSize: 14, marginBottom: 24 }}>Manage your subscription and track meal & grocery spending.</p>
 

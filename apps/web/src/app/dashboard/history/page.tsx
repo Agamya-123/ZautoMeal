@@ -25,7 +25,7 @@ export default function HistoryPage() {
   const totalSpent    = mealSpent + grocerySpent;
 
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '36px 40px' }}>
       <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 26, marginBottom: 6 }}>🕐 Order History</h1>
       <p style={{ color: 'var(--brand-muted)', fontSize: 14, marginBottom: 28 }}>All your automated meals and grocery deliveries in one place.</p>
 

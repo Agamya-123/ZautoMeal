@@ -32,9 +32,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         display: 'flex',
         flexDirection: 'column',
         gap: 4,
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
         overflowY: 'auto',
       }}>
         {/* Logo */}
@@ -91,7 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ── Page content ── */}
-      <main style={{ flex: 1, overflow: 'auto' }}>
+      <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
         {children}
       </main>
     </div>

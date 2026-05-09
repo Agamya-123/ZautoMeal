@@ -36,7 +36,7 @@ export default function DashboardPage() {
   const totalSpent   = spent(filter);
 
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '36px 40px' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
