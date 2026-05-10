@@ -48,7 +48,11 @@ export default function SettingsPage() {
 
   const [name,       setName]       = useState('');
   const [email,      setEmail]      = useState('');
-  const [phone,      setPhone]      = useState('+91 98765 43210');
+  const [phone,      setPhone]      = useState('');
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState('');
+
   const [whatsapp,   setWhatsapp]   = useState(true);
   const [push,       setPush]       = useState(true);
   const [sms,        setSms]        = useState(false);
@@ -83,7 +87,27 @@ export default function SettingsPage() {
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
           <FieldRow label="Full Name"><input value={name} onChange={e=>setName(e.target.value)} placeholder="Your name"/></FieldRow>
           <FieldRow label="Email Address"><input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="your@email.com"/></FieldRow>
-          <FieldRow label="Phone / WhatsApp"><input value={phone} onChange={e=>setPhone(e.target.value)} type="tel" placeholder="+91 00000 00000"/></FieldRow>
+          <FieldRow label="Phone / WhatsApp">
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input 
+                value={phone} 
+                onChange={e => { setPhone(e.target.value); setIsPhoneVerified(false); }} 
+                type="tel" 
+                placeholder="+91 00000 00000" 
+                style={{ flex: 1, borderColor: (phone && !isPhoneVerified) ? 'rgba(252,128,25,0.4)' : undefined }}
+              />
+              {phone && isPhoneVerified && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', background: 'rgba(0,230,118,0.1)', color: '#00E676', borderRadius: 8, fontSize: 12, fontWeight: 600, border: '1px solid rgba(0,230,118,0.2)' }}>
+                  <IcCheck /> Verified
+                </div>
+              )}
+              {phone && !isPhoneVerified && (
+                <button className="btn btn-primary" style={{ padding: '0 16px', fontSize: 13 }} onClick={() => setShowOtpModal(true)}>
+                  Verify
+                </button>
+              )}
+            </div>
+          </FieldRow>
           <FieldRow label="Timezone">
             <select>
               <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
@@ -132,6 +156,36 @@ export default function SettingsPage() {
           <button className="btn btn-ghost" style={{fontSize:12,color:'var(--c-red)',borderColor:'rgba(239,68,68,0.25)'}} onClick={()=>confirm('Delete your account permanently?')}>Delete Account</button>
         </div>
       </Section>
+
+      {/* OTP Modal */}
+      {showOtpModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div className="luxury-card" style={{ width: 360, padding: 32, textAlign: 'center', animation: 'fadeUp 0.2s ease-out' }}>
+            <h3 style={{ fontSize: 18, marginBottom: 8 }}>Verify WhatsApp Number</h3>
+            <p style={{ fontSize: 13, color: 'var(--c-muted)', marginBottom: 24 }}>Enter the 4-digit code sent to {phone}</p>
+            <input 
+              type="text" 
+              maxLength={4}
+              placeholder="0000" 
+              value={otp}
+              onChange={e => setOtp(e.target.value)}
+              style={{ width: 120, fontSize: 24, letterSpacing: '0.2em', textAlign: 'center', marginBottom: 24 }}
+            />
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setShowOtpModal(false)}>Cancel</button>
+              <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => {
+                if(otp.length === 4) {
+                  setIsPhoneVerified(true);
+                  setShowOtpModal(false);
+                  setOtp('');
+                } else {
+                  alert('Please enter a 4-digit OTP');
+                }
+              }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
