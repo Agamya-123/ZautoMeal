@@ -296,7 +296,7 @@ export default function SettingsPage() {
               placeholder="000000" 
               value={otp}
               onChange={e => setOtp(e.target.value)}
-              style={{ width: 140, fontSize: 24, letterSpacing: '0.2em', textAlign: 'center', marginBottom: 24 }}
+              style={{ width: 180, fontSize: 24, letterSpacing: '0.2em', textAlign: 'center', marginBottom: 24 }}
             />
             <div style={{ display: 'flex', gap: 12 }}>
               <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setShowOtpModal(false)} disabled={isVerifyingOtp}>Cancel</button>
