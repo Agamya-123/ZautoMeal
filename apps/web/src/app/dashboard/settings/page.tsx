@@ -185,6 +185,10 @@ export default function SettingsPage() {
     }
   };
 
+  if (isLoading) {
+    return <div style={{ padding: '40px 36px', color: 'var(--c-muted)', fontSize: 14 }}>Loading settings...</div>;
+  }
+
   return (
     <div style={{padding:'32px 36px'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:28}}>
