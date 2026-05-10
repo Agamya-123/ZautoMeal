@@ -29,42 +29,47 @@ export default function DashboardPage() {
   const [filter, setFilter]       = useState<Filter>('all');
   const [schedules, setSchedules] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [orders, setOrders]       = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/schedules')
-      .then(res => res.json())
-      .then(data => {
-        setTimeout(() => {
-          if (data.schedules) {
-            setSchedules(data.schedules.map((s: any) => ({
-              id: s.id,
-              type: s.type.toLowerCase(),
-              label: s.name,
-              restaurant: s.restaurant,
-              time: s.time || (s.type==='GROCERY'?'11:00 AM':''),
-              days: s.days.length===7?'Daily':s.days.join(','),
-              status: s.isActive ? 'active' : 'paused',
-              nextOrder: 'Tomorrow'
-            })));
-          }
-          setIsLoading(false);
-        }, 800);
-      });
+    Promise.all([
+      fetch('/api/schedules').then(r => r.json()),
+      fetch('/api/orders').then(r => r.json()),
+    ]).then(([schedData, ordData]) => {
+      setTimeout(() => {
+        if (schedData.schedules) {
+          setSchedules(schedData.schedules.map((s: any) => ({
+            id: s.id,
+            type: s.type.toLowerCase(),
+            label: s.name,
+            restaurant: s.restaurant,
+            time: s.time || (s.type==='GROCERY'?'11:00 AM':''),
+            days: s.days.length===7?'Daily':s.days.join(','),
+            status: s.isActive ? 'active' : 'paused',
+            nextOrder: 'Tomorrow'
+          })));
+        }
+        if (ordData.orders) setOrders(ordData.orders);
+        setIsLoading(false);
+      }, 800);
+    });
   }, []);
 
-  const filteredOrders    = filter === 'all' ? mockOrders    : mockOrders.filter(o => o.type === filter);
+  const filteredOrders    = filter === 'all' ? orders    : orders.filter((o: any) => o.type.toLowerCase() === filter);
   const filteredSchedules = filter === 'all' ? schedules : schedules.filter(s => s.type === filter);
-  const spend = (f: Filter) => mockOrders.filter(o => o.status === 'DELIVERED' && (f === 'all' || o.type === f)).reduce((s, o) => s + o.amount, 0);
+  const spend = (f: string) => orders
+    .filter((o: any) => o.status === 'DELIVERED' && (f === 'all' || o.type.toLowerCase() === f))
+    .reduce((s: number, o: any) => s + o.amount, 0);
   const mealSpent    = spend('meal');
   const grocerySpent = spend('grocery');
   const totalSpent   = spend(filter);
 
   const statCards = filter === 'all'
     ? [
-        { label:'Total Spent',    value:`₹${totalSpent.toLocaleString()}`,    icon:<IcMoney/>,  color:'#FC8019' },
-        { label:'Meal Spend',     value:`₹${mealSpent.toLocaleString()}`,     icon:<IcFork/>,   color:'#FF9A6C' },
-        { label:'Grocery Spend',  value:`₹${grocerySpent.toLocaleString()}`,  icon:<IcCart/>,   color:'#00E676' },
-        { label:'Hours Saved',    value:'9',                                   icon:<IcClock/>,  color:'#87CEFF' },
+        { label:'Total Spent',    value:isLoading?'-':`₹${spend('all').toLocaleString()}`,    icon:<IcMoney/>,  color:'#FC8019' },
+        { label:'Meal Spend',     value:isLoading?'-':`₹${mealSpent.toLocaleString()}`,     icon:<IcFork/>,   color:'#FF9A6C' },
+        { label:'Grocery Spend',  value:isLoading?'-':`₹${grocerySpent.toLocaleString()}`,  icon:<IcCart/>,   color:'#00E676' },
+        { label:'Hours Saved',    value:isLoading?'-':'9',                                   icon:<IcClock/>,  color:'#87CEFF' },
       ]
     : [
         { label: filter==='meal' ? 'Meal Spent' : 'Grocery Spent', value:isLoading?'-':`₹${totalSpent.toLocaleString()}`, icon: filter==='meal'?<IcFork/>:<IcCart/>, color: filter==='meal'?'#FC8019':'#00E676' },
@@ -195,18 +200,31 @@ export default function DashboardPage() {
         </div>
 
         <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-          {filteredOrders.map(o => (
+          {isLoading ? (
+            [1,2].map(i => (
+              <div key={i} className="sched-card" style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr auto auto', gap:16, padding:'14px 16px', alignItems:'center', animation:'pulse 1.5s infinite' }}>
+                <div style={{ width:34, height:34, borderRadius:9, background:'rgba(255,255,255,0.05)' }}/>
+                <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                  <div style={{ width:100, height:13, borderRadius:4, background:'rgba(255,255,255,0.08)' }}/>
+                  <div style={{ width:130, height:11, borderRadius:4, background:'rgba(255,255,255,0.04)' }}/>
+                </div>
+                <div style={{ width:'60%', height:12, borderRadius:4, background:'rgba(255,255,255,0.04)' }}/>
+                <div style={{ width:50, height:14, borderRadius:4, background:'rgba(255,255,255,0.06)' }}/>
+                <div style={{ width:60, height:22, borderRadius:11, background:'rgba(255,255,255,0.05)' }}/>
+              </div>
+            ))
+          ) : filteredOrders.slice(0, 4).map((o: any) => (
             <div key={o.id} className="sched-card" style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr auto auto', gap:16, padding:'14px 16px', alignItems:'center' }}>
-              <div style={{ width:34, height:34, borderRadius:9, flexShrink:0, background: o.type==='meal'?'rgba(252,128,25,0.1)':'rgba(0,230,118,0.1)', display:'flex', alignItems:'center', justifyContent:'center', color: o.type==='meal'?'#FC8019':'#00E676', border:`1px solid ${o.type==='meal'?'rgba(252,128,25,0.2)':'rgba(0,230,118,0.2)'}` }}>
-                {o.type==='meal' ? <IcTruck/> : <IcBox/>}
+              <div style={{ width:34, height:34, borderRadius:9, flexShrink:0, background: o.type==='MEAL'?'rgba(252,128,25,0.1)':'rgba(0,230,118,0.1)', display:'flex', alignItems:'center', justifyContent:'center', color: o.type==='MEAL'?'#FC8019':'#00E676', border:`1px solid ${o.type==='MEAL'?'rgba(252,128,25,0.2)':'rgba(0,230,118,0.2)'}` }}>
+                {o.type==='MEAL' ? <IcTruck/> : <IcBox/>}
               </div>
               <div>
-                <div style={{ fontWeight:600, fontSize:13 }}>{o.restaurant}</div>
-                <div style={{ fontSize:11, color:'var(--c-muted)', marginTop:2 }}>{o.date} · {o.time}</div>
+                <div style={{ fontWeight:600, fontSize:13 }}>{o.vendorName}</div>
+                <div style={{ fontSize:11, color:'var(--c-muted)', marginTop:2 }}>{o.schedule?.name || 'Manual'} · {new Date(o.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
               </div>
-              <div style={{ fontSize:12, color:'var(--c-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{o.items}</div>
+              <div style={{ fontSize:12, color:'var(--c-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{o.swiggyOrderId || '—'}</div>
               <div style={{ fontWeight:700, fontSize:14, color:'var(--c-text)' }}>₹{o.amount.toLocaleString()}</div>
-              <span className="badge badge-success">Delivered</span>
+              <span className={`badge badge-${o.status==='DELIVERED'?'success':o.status==='SCHEDULED'?'blue':'warn'}`}>{o.status}</span>
             </div>
           ))}
         </div>

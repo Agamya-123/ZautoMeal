@@ -52,6 +52,22 @@ export async function POST(req: Request) {
       }
     });
 
+    // Auto-create an order entry so it appears in history immediately
+    const itemNames = (data.items || []).map((it: any) => it.name || it).join(', ');
+    await prisma.order.create({
+      data: {
+        userId: user.id,
+        scheduleId: schedule.id,
+        type: data.type,
+        vendorName: data.restaurant || 'Unknown Restaurant',
+        amount: data.totalAmount || 0,
+        status: 'SCHEDULED',
+        date: new Date(),
+        // store item names in a note field via swiggyOrderId as a workaround
+        swiggyOrderId: itemNames || null,
+      }
+    });
+
     return NextResponse.json({ success: true, schedule });
   } catch (err: any) {
     console.error('Error creating schedule:', err);
