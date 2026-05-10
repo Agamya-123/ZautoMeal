@@ -29,15 +29,18 @@ function FieldRow({label, children}: {label:string; children:React.ReactNode}) {
   );
 }
 
-function ToggleRow({label, desc, value, onChange}: {label:string; desc?:string; value:boolean; onChange:(v:boolean)=>void}) {
+function ToggleRow({label, desc, value, onChange, action}: {label:string; desc?:string; value:boolean; onChange:(v:boolean)=>void; action?:React.ReactNode}) {
   return (
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
       <div>
         <div style={{fontSize:13,fontWeight:500}}>{label}</div>
         {desc && <div style={{fontSize:12,color:'var(--c-muted)',marginTop:2}}>{desc}</div>}
       </div>
-      <div onClick={()=>onChange(!value)} style={{width:44,height:24,borderRadius:12,cursor:'pointer',transition:'background 0.2s',flexShrink:0,background:value?'#FC8019':'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',padding:'0 3px'}}>
-        <div style={{width:18,height:18,borderRadius:9,background:'#fff',transition:'transform 0.2s',transform:value?'translateX(20px)':'translateX(0)',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}}/>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {action}
+        <div onClick={()=>onChange(!value)} style={{width:44,height:24,borderRadius:12,cursor:'pointer',transition:'background 0.2s',flexShrink:0,background:value?'#FC8019':'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',padding:'0 3px'}}>
+          <div style={{width:18,height:18,borderRadius:9,background:'#fff',transition:'transform 0.2s',transform:value?'translateX(20px)':'translateX(0)',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}}/>
+        </div>
       </div>
     </div>
   );
@@ -57,7 +60,7 @@ export default function SettingsPage() {
 
   const [whatsapp,   setWhatsapp]   = useState(true);
   const [push,       setPush]       = useState(true);
-  const [sms,        setSms]        = useState(false);
+  const [sms,        setSms]        = useState(true);
   const [alertTime,  setAlertTime]  = useState('60');
   const [autoConfirm,setAutoConfirm]= useState(true);
   const [pauseAll,   setPauseAll]   = useState(false);
@@ -114,6 +117,24 @@ export default function SettingsPage() {
     setIsVerifyingOtp(false);
   };
 
+  const handleTestAlert = async (type: 'sms' | 'whatsapp') => {
+    if (!phone) return alert('Please set your phone number first');
+    try {
+      const res = await fetch('/api/test-alert', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, type })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Success! ${type.toUpperCase()} sent.`);
+      } else {
+        alert(`Failed: ${data.error}`);
+      }
+    } catch (err) {
+      alert(`Error sending ${type}`);
+    }
+  };
+
   return (
     <div style={{padding:'32px 36px'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:28}}>
@@ -164,9 +185,21 @@ export default function SettingsPage() {
 
       {/* Notifications */}
       <Section icon={<IcBell/>} title="Notifications">
-        <ToggleRow label="WhatsApp Alerts"      desc="Order confirmations and reminders via WhatsApp" value={whatsapp}    onChange={setWhatsapp}/>
+        <ToggleRow 
+          label="WhatsApp Alerts" 
+          desc="Order confirmations and reminders via WhatsApp" 
+          value={whatsapp} 
+          onChange={setWhatsapp}
+          action={whatsapp && isPhoneVerified ? <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 11 }} onClick={() => handleTestAlert('whatsapp')}>Test</button> : null}
+        />
         <ToggleRow label="Push Notifications"   desc="Browser and mobile push notifications"          value={push}        onChange={setPush}/>
-        <ToggleRow label="SMS Alerts"           desc="Text message fallback for critical alerts"       value={sms}         onChange={setSms}/>
+        <ToggleRow 
+          label="SMS Alerts" 
+          desc="Text message fallback for critical alerts" 
+          value={sms} 
+          onChange={setSms}
+          action={sms && isPhoneVerified ? <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 11 }} onClick={() => handleTestAlert('sms')}>Test</button> : null}
+        />
         <div className="divider"/>
         <FieldRow label="Alert Lead Time">
           <select value={alertTime} onChange={e=>setAlertTime(e.target.value)}>
