@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const IcFork    = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="11" x2="7" y2="22"/><path d="M21 15V2s-4 2-4 9v4a2 2 0 002 2h2z"/></svg>;
@@ -34,26 +34,24 @@ export default function SchedulesPage() {
   const [editingId, setEditingId] = useState<string|null>(null);
   const [editForm,  setEditForm]  = useState<Partial<Schedule>>({});
 
-  import('react').then(React => {
-    React.useEffect(() => {
-      fetch('/api/schedules?type=MEAL')
-        .then(res => res.json())
-        .then(data => {
-          if (data.schedules) {
-            setSchedules(data.schedules.map((s: any) => ({
-              ...s,
-              label: s.name,
-              displayDays: s.days,
-              days: s.days.length===7?'Daily':s.days.join(',')==='Mon,Tue,Wed,Thu,Fri'?'Mon–Fri':s.days.join(', '),
-              status: s.isActive ? 'active' : 'paused',
-              nextOrder: 'Tomorrow ' + s.time,
-              amount: s.totalAmount
-            })));
-          }
-          setIsLoading(false);
-        });
-    }, []);
-  });
+  useEffect(() => {
+    fetch('/api/schedules?type=MEAL')
+      .then(res => res.json())
+      .then(data => {
+        if (data.schedules) {
+          setSchedules(data.schedules.map((s: any) => ({
+            ...s,
+            label: s.name,
+            displayDays: s.days,
+            days: s.days.length===7?'Daily':s.days.join(',')==='Mon,Tue,Wed,Thu,Fri'?'Mon–Fri':s.days.join(', '),
+            status: s.isActive ? 'active' : 'paused',
+            nextOrder: 'Tomorrow ' + s.time,
+            amount: s.totalAmount
+          })));
+        }
+        setIsLoading(false);
+      });
+  }, []);
 
   const activeCount = schedules.filter(s => s.status==='active').length;
   const monthlyEst  = schedules.filter(s => s.status==='active').reduce((sum,s) => sum + s.totalAmount * 20, 0);
