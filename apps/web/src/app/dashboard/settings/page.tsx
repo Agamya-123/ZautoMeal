@@ -206,14 +206,14 @@ export default function SettingsPage() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
           <div className="luxury-card" style={{ width: 360, padding: 32, textAlign: 'center', animation: 'fadeUp 0.2s ease-out' }}>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>Verify WhatsApp Number</h3>
-            <p style={{ fontSize: 13, color: 'var(--c-muted)', marginBottom: 24 }}>Enter the 4-digit code sent to {phone}</p>
+            <p style={{ fontSize: 13, color: 'var(--c-muted)', marginBottom: 24 }}>Enter the 6-digit code sent to {phone}</p>
             <input 
               type="text" 
-              maxLength={4}
-              placeholder="0000" 
+              maxLength={6}
+              placeholder="000000" 
               value={otp}
               onChange={e => setOtp(e.target.value)}
-              style={{ width: 120, fontSize: 24, letterSpacing: '0.2em', textAlign: 'center', marginBottom: 24 }}
+              style={{ width: 140, fontSize: 24, letterSpacing: '0.2em', textAlign: 'center', marginBottom: 24 }}
             />
             <div style={{ display: 'flex', gap: 12 }}>
               <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setShowOtpModal(false)} disabled={isVerifyingOtp}>Cancel</button>
