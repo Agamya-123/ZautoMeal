@@ -70,6 +70,21 @@ export default function SchedulesPage() {
     setEditingId(null);
   };
 
+  const deleteSchedule = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this schedule?')) return;
+    try {
+      const res = await fetch(`/api/schedules/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSchedules(p => p.filter(s => s.id !== id));
+        setEditingId(null);
+      } else {
+        alert('Failed to delete schedule');
+      }
+    } catch (e) {
+      alert('Error deleting schedule');
+    }
+  };
+
   return (
     <div style={{padding:'32px 36px'}}>
       {/* Header */}
@@ -159,9 +174,12 @@ export default function SchedulesPage() {
                     </div>
                   </div>
                 </div>
-                <div style={{padding:'14px 22px',borderTop:'1px solid var(--c-border)',display:'flex',gap:8,justifyContent:'flex-end'}}>
-                  <button onClick={()=>setEditingId(null)} className="btn btn-ghost" style={{padding:'8px 16px',fontSize:12}}>Cancel</button>
-                  <button onClick={saveEdit} className="btn btn-primary" style={{padding:'8px 16px',fontSize:12}}>Save Changes</button>
+                <div style={{padding:'14px 22px',borderTop:'1px solid var(--c-border)',display:'flex',justifyContent:'space-between'}}>
+                  <button onClick={()=>deleteSchedule(s.id)} style={{background:'none',border:'none',color:'#ef4444',cursor:'pointer',fontSize:12,fontWeight:600}}>Delete Schedule</button>
+                  <div style={{display:'flex',gap:8}}>
+                    <button onClick={()=>setEditingId(null)} className="btn btn-ghost" style={{padding:'8px 16px',fontSize:12}}>Cancel</button>
+                    <button onClick={saveEdit} className="btn btn-primary" style={{padding:'8px 16px',fontSize:12}}>Save Changes</button>
+                  </div>
                 </div>
               </div>
             )}
