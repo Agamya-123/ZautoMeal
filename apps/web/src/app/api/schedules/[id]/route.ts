@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -13,7 +13,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   try {
-    const scheduleId = params.id;
+    const resolvedParams = await params;
+    const scheduleId = resolvedParams.id;
     
     // Ensure the schedule belongs to the user
     const schedule = await prisma.schedule.findUnique({ where: { id: scheduleId } });
