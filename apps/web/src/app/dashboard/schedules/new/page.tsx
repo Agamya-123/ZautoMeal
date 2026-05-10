@@ -268,7 +268,27 @@ export default function NewSchedulePage() {
               ✅ You'll get a <strong style={{ color: 'var(--brand-text)' }}>notification {form.alertBefore} minutes before</strong> each order to confirm, skip, or reschedule.
             </div>
             <button
-              onClick={() => { alert('Schedule activated! (Swiggy API coming soon)'); router.push('/dashboard/schedules'); }}
+              onClick={async () => { 
+                const res = await fetch('/api/schedules', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: 'MEAL',
+                    name: form.label,
+                    time: form.time,
+                    days: form.days,
+                    restaurant: restaurant?.name || 'Unknown',
+                    items: chosenItems,
+                    totalAmount: totalPrice
+                  })
+                });
+                if (res.ok) {
+                  router.push('/dashboard/schedules');
+                  router.refresh();
+                } else {
+                  alert('Failed to save schedule.');
+                }
+              }}
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center', fontSize: 15, padding: '14px' }}
             >

@@ -14,25 +14,53 @@ const IcX       = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="no
 
 const ALL_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-const initialSchedules = [
-  { id:'s1', label:'Work Lunch',      restaurant:'Burger King', time:'13:00', days:'Mon–Fri', displayDays:['Mon','Tue','Wed','Thu','Fri'], status:'active',  nextOrder:'Today 1:00 PM',    items:['Whopper','Medium Fries'], amount:349 },
-  { id:'s2', label:'Daily Breakfast', restaurant:'Subway',       time:'08:30', days:'Daily',   displayDays:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], status:'active',  nextOrder:'Tomorrow 8:30 AM', items:['Veg Delight Sub'],        amount:219 },
-  { id:'s3', label:'Weekend Dinner',  restaurant:'Pizza Hut',    time:'19:30', days:'Sat–Sun', displayDays:['Sat','Sun'], status:'paused', nextOrder:'Sat 7:30 PM',      items:['Margherita','Garlic Bread'], amount:599 },
-];
-
-type Schedule = typeof initialSchedules[0];
+type Schedule = {
+  id: string;
+  name: string;
+  restaurant: string;
+  time: string;
+  days: string[];
+  displayDays: string[];
+  status: string;
+  nextOrder: string;
+  items: {name:string; price:number}[];
+  totalAmount: number;
+  isActive: boolean;
+};
 
 export default function SchedulesPage() {
-  const [schedules, setSchedules] = useState(initialSchedules);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string|null>(null);
   const [editForm,  setEditForm]  = useState<Partial<Schedule>>({});
 
+  import('react').then(React => {
+    React.useEffect(() => {
+      fetch('/api/schedules?type=MEAL')
+        .then(res => res.json())
+        .then(data => {
+          if (data.schedules) {
+            setSchedules(data.schedules.map((s: any) => ({
+              ...s,
+              label: s.name,
+              displayDays: s.days,
+              days: s.days.length===7?'Daily':s.days.join(',')==='Mon,Tue,Wed,Thu,Fri'?'Mon–Fri':s.days.join(', '),
+              status: s.isActive ? 'active' : 'paused',
+              nextOrder: 'Tomorrow ' + s.time,
+              amount: s.totalAmount
+            })));
+          }
+          setIsLoading(false);
+        });
+    }, []);
+  });
+
   const activeCount = schedules.filter(s => s.status==='active').length;
-  const monthlyEst  = schedules.filter(s => s.status==='active').reduce((sum,s) => sum + s.amount * 20, 0);
+  const monthlyEst  = schedules.filter(s => s.status==='active').reduce((sum,s) => sum + s.totalAmount * 20, 0);
 
   const toggleStatus = (id:string) => setSchedules(p => p.map(s => s.id===id ? {...s, status:s.status==='active'?'paused':'active'} : s));
 
-  const openEdit = (s:Schedule) => { setEditingId(s.id); setEditForm({label:s.label, restaurant:s.restaurant, time:s.time, displayDays:[...s.displayDays]}); };
+  const openEdit = (s:Schedule) => { setEditingId(s.id); setEditForm({name:s.name, restaurant:s.restaurant, time:s.time, displayDays:[...s.displayDays]}); };
   const toggleEditDay = (d:string) => setEditForm(f => { const c=f.displayDays||[]; return {...f, displayDays:c.includes(d)?c.filter(x=>x!==d):[...c,d]}; });
   const saveEdit = () => {
     setSchedules(p => p.map(s => {
@@ -54,6 +82,8 @@ export default function SchedulesPage() {
         </div>
         <Link href="/dashboard/schedules/new" className="btn btn-primary"><IcPlus/> New Meal Schedule</Link>
       </div>
+
+      {isLoading && <div style={{color:'var(--c-muted)', padding:'20px 0'}}>Loading schedules...</div>}
 
       {/* Stats */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:28}}>
@@ -83,13 +113,13 @@ export default function SchedulesPage() {
                   <div style={{width:42,height:42,borderRadius:11,flexShrink:0,background:'rgba(252,128,25,0.1)',display:'flex',alignItems:'center',justifyContent:'center',color:'#FC8019',border:'1px solid rgba(252,128,25,0.2)'}}><IcFork/></div>
                   <div style={{flex:1}}>
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
-                      <span style={{fontWeight:600,fontSize:14}}>{s.label}</span>
+                      <span style={{fontWeight:600,fontSize:14}}>{s.name}</span>
                       <span className={`badge badge-${s.status==='active'?'success':'warn'}`}>{s.status}</span>
                     </div>
                     <div style={{color:'var(--c-muted)',fontSize:12}}>{s.restaurant} · {s.time} · {s.days}</div>
                   </div>
                   <div style={{display:'flex',flexWrap:'wrap',gap:6,marginRight:16}}>
-                    {s.items.map((item,i) => <span key={i} style={{padding:'3px 10px',borderRadius:6,fontSize:11,background:'rgba(255,255,255,0.04)',border:'1px solid var(--c-border)',color:'var(--c-muted)'}}>{item}</span>)}
+                    {s.items.map((item,i) => <span key={i} style={{padding:'3px 10px',borderRadius:6,fontSize:11,background:'rgba(255,255,255,0.04)',border:'1px solid var(--c-border)',color:'var(--c-muted)'}}>{item.name}</span>)}
                   </div>
                   <div style={{textAlign:'right',flexShrink:0,marginRight:12}}>
                     <div style={{fontSize:10,color:'var(--c-muted)',fontWeight:600,letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:3}}>{s.status==='active'?'Next order':'Status'}</div>
@@ -108,12 +138,12 @@ export default function SchedulesPage() {
             {editingId===s.id && (
               <div>
                 <div style={{padding:'14px 22px',background:'rgba(252,128,25,0.07)',borderBottom:'1px solid rgba(252,128,25,0.15)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                  <span style={{fontWeight:700,fontSize:13,color:'#FC8019',letterSpacing:'0.01em'}}>Editing — {s.label}</span>
+                  <span style={{fontWeight:700,fontSize:13,color:'#FC8019',letterSpacing:'0.01em'}}>Editing — {s.name}</span>
                   <button onClick={()=>setEditingId(null)} style={{background:'none',border:'none',color:'var(--c-muted)',cursor:'pointer',display:'flex'}}><IcX/></button>
                 </div>
                 <div style={{padding:'22px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
                   <div style={{display:'flex',flexDirection:'column',gap:14}}>
-                    <div><label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--c-muted)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:7}}>Schedule Name</label><input value={editForm.label||''} onChange={e=>setEditForm(f=>({...f,label:e.target.value}))} placeholder="e.g. Work Lunch"/></div>
+                    <div><label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--c-muted)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:7}}>Schedule Name</label><input value={editForm.name||''} onChange={e=>setEditForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Work Lunch"/></div>
                     <div><label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--c-muted)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:7}}>Restaurant</label><input value={editForm.restaurant||''} onChange={e=>setEditForm(f=>({...f,restaurant:e.target.value}))} placeholder="e.g. Burger King"/></div>
                     <div><label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--c-muted)',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:7}}>Order Time</label><input type="time" value={editForm.time||''} onChange={e=>setEditForm(f=>({...f,time:e.target.value}))}/></div>
                   </div>
