@@ -65,15 +65,58 @@ export default function SettingsPage() {
   const [autoConfirm,setAutoConfirm]= useState(true);
   const [pauseAll,   setPauseAll]   = useState(false);
   const [saved,      setSaved]      = useState(false);
+  const [isLoading,  setIsLoading]  = useState(true);
 
   useEffect(() => {
     if (session?.user) {
       setName(session.user.name || '');
       setEmail(session.user.email || '');
+      
+      // Fetch user settings from DB
+      fetch('/api/user/settings')
+        .then(res => res.json())
+        .then(data => {
+          if (data.settings) {
+            setPhone(data.settings.phone || '');
+            setIsPhoneVerified(data.settings.phoneVerified || false);
+            setWhatsapp(data.settings.notifyWhatsapp);
+            setPush(data.settings.notifyPush);
+            setSms(data.settings.notifySms);
+            setAlertTime(data.settings.alertLeadTime.toString());
+            setAutoConfirm(data.settings.autoConfirm);
+            setPauseAll(data.settings.pauseAll);
+          }
+          setIsLoading(false);
+        })
+        .catch(err => {
+          console.error('Failed to load settings:', err);
+          setIsLoading(false);
+        });
     }
   }, [session]);
 
-  const save = () => { setSaved(true); setTimeout(()=>setSaved(false),2500); };
+  const save = async () => { 
+    try {
+      await fetch('/api/user/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          phoneVerified: isPhoneVerified,
+          notifyWhatsapp: whatsapp,
+          notifyPush: push,
+          notifySms: sms,
+          alertLeadTime: parseInt(alertTime),
+          autoConfirm,
+          pauseAll
+        })
+      });
+      setSaved(true); 
+      setTimeout(()=>setSaved(false),2500); 
+    } catch (err) {
+      alert('Failed to save settings');
+    }
+  };
 
   const handleSendOtp = async () => {
     if (!phone) return alert('Please enter a phone number first');
@@ -108,6 +151,13 @@ export default function SettingsPage() {
         setIsPhoneVerified(true);
         setShowOtpModal(false);
         setOtp('');
+        
+        // Auto-save the verified phone number to DB
+        fetch('/api/user/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, phoneVerified: true })
+        });
       } else {
         alert(data.error || 'Invalid OTP');
       }
