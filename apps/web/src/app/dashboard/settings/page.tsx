@@ -52,6 +52,8 @@ export default function SettingsPage() {
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otp, setOtp] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   const [whatsapp,   setWhatsapp]   = useState(true);
   const [push,       setPush]       = useState(true);
@@ -69,6 +71,48 @@ export default function SettingsPage() {
   }, [session]);
 
   const save = () => { setSaved(true); setTimeout(()=>setSaved(false),2500); };
+
+  const handleSendOtp = async () => {
+    if (!phone) return alert('Please enter a phone number first');
+    setIsSendingOtp(true);
+    try {
+      const res = await fetch('/api/otp/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setShowOtpModal(true);
+      } else {
+        alert(data.error || 'Failed to send OTP');
+      }
+    } catch (err) {
+      alert('Error sending OTP');
+    }
+    setIsSendingOtp(false);
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp) return alert('Please enter the OTP');
+    setIsVerifyingOtp(true);
+    try {
+      const res = await fetch('/api/otp/verify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, code: otp })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsPhoneVerified(true);
+        setShowOtpModal(false);
+        setOtp('');
+      } else {
+        alert(data.error || 'Invalid OTP');
+      }
+    } catch (err) {
+      alert('Error verifying OTP');
+    }
+    setIsVerifyingOtp(false);
+  };
 
   return (
     <div style={{padding:'32px 36px'}}>
@@ -102,8 +146,8 @@ export default function SettingsPage() {
                 </div>
               )}
               {phone && !isPhoneVerified && (
-                <button className="btn btn-primary" style={{ padding: '0 16px', fontSize: 13 }} onClick={() => setShowOtpModal(true)}>
-                  Verify
+                <button className="btn btn-primary" style={{ padding: '0 16px', fontSize: 13 }} onClick={handleSendOtp} disabled={isSendingOtp}>
+                  {isSendingOtp ? 'Sending...' : 'Verify'}
                 </button>
               )}
             </div>
@@ -172,16 +216,10 @@ export default function SettingsPage() {
               style={{ width: 120, fontSize: 24, letterSpacing: '0.2em', textAlign: 'center', marginBottom: 24 }}
             />
             <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setShowOtpModal(false)}>Cancel</button>
-              <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => {
-                if(otp.length === 4) {
-                  setIsPhoneVerified(true);
-                  setShowOtpModal(false);
-                  setOtp('');
-                } else {
-                  alert('Please enter a 4-digit OTP');
-                }
-              }}>Confirm</button>
+              <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setShowOtpModal(false)} disabled={isVerifyingOtp}>Cancel</button>
+              <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={handleVerifyOtp} disabled={isVerifyingOtp}>
+                {isVerifyingOtp ? 'Verifying...' : 'Confirm'}
+              </button>
             </div>
           </div>
         </div>
