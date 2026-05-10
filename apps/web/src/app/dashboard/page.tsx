@@ -46,7 +46,8 @@ export default function DashboardPage() {
             time: s.time || (s.type==='GROCERY'?'11:00 AM':''),
             days: s.days.length===7?'Daily':s.days.join(','),
             status: s.isActive ? 'active' : 'paused',
-            nextOrder: 'Tomorrow'
+            nextOrder: 'Tomorrow',
+            rawTotalAmount: s.totalAmount || 0,
           })));
         }
         if (ordData.orders) setOrders(ordData.orders);
@@ -57,25 +58,27 @@ export default function DashboardPage() {
 
   const filteredOrders    = filter === 'all' ? orders    : orders.filter((o: any) => o.type.toLowerCase() === filter);
   const filteredSchedules = filter === 'all' ? schedules : schedules.filter(s => s.type === filter);
-  const spend = (f: string) => orders
-    .filter((o: any) => o.status === 'DELIVERED' && (f === 'all' || o.type.toLowerCase() === f))
-    .reduce((s: number, o: any) => s + o.amount, 0);
-  const mealSpent    = spend('meal');
-  const grocerySpent = spend('grocery');
-  const totalSpent   = spend(filter);
+
+  // Estimated monthly spend derived from schedule totalAmount (same as Schedules page)
+  const estSpend = (f: string) => schedules
+    .filter(s => s.status === 'active' && (f === 'all' || s.type === f))
+    .reduce((sum: number, s: any) => sum + (s.rawTotalAmount || 0) * 20, 0);
+  const mealSpent    = estSpend('meal');
+  const grocerySpent = estSpend('grocery');
+  const totalSpent   = estSpend(filter === 'all' ? 'all' : filter);
 
   const statCards = filter === 'all'
     ? [
-        { label:'Total Spent',    value:isLoading?'-':`₹${spend('all').toLocaleString()}`,    icon:<IcMoney/>,  color:'#FC8019' },
-        { label:'Meal Spend',     value:isLoading?'-':`₹${mealSpent.toLocaleString()}`,     icon:<IcFork/>,   color:'#FF9A6C' },
-        { label:'Grocery Spend',  value:isLoading?'-':`₹${grocerySpent.toLocaleString()}`,  icon:<IcCart/>,   color:'#00E676' },
-        { label:'Hours Saved',    value:isLoading?'-':'9',                                   icon:<IcClock/>,  color:'#87CEFF' },
+        { label:'Est. Monthly Spend', value:isLoading?'-':`₹${estSpend('all').toLocaleString()}`, icon:<IcMoney/>,  color:'#FC8019' },
+        { label:'Meal Schedules',     value:isLoading?'-':`${schedules.filter(s=>s.type==='meal'&&s.status==='active').length}`, icon:<IcFork/>,   color:'#FF9A6C' },
+        { label:'Grocery Schedules',  value:isLoading?'-':`${schedules.filter(s=>s.type==='grocery'&&s.status==='active').length}`, icon:<IcCart/>,   color:'#00E676' },
+        { label:'Hours Saved',        value:isLoading?'-':`${schedules.filter(s=>s.status==='active').length * 5}`,                icon:<IcClock/>,  color:'#87CEFF' },
       ]
     : [
-        { label: filter==='meal' ? 'Meal Spent' : 'Grocery Spent', value:isLoading?'-':`₹${totalSpent.toLocaleString()}`, icon: filter==='meal'?<IcFork/>:<IcCart/>, color: filter==='meal'?'#FC8019':'#00E676' },
-        { label:'Active Schedules', value:isLoading?'-':`${filteredSchedules.filter(s=>s.status==='active').length}`, icon:<IcCal/>,   color:'#87CEFF' },
-        { label:'Orders',           value:isLoading?'-':`${filteredOrders.length}`,                                    icon:<IcTruck/>, color:'#FF9A6C' },
-        { label:'Hours Saved',      value:isLoading?'-':'9',                                                           icon:<IcClock/>, color:'#A78BFA' },
+        { label: filter==='meal' ? 'Est. Meal Spend/mo' : 'Est. Grocery Spend/mo', value:isLoading?'-':`₹${totalSpent.toLocaleString()}`, icon: filter==='meal'?<IcFork/>:<IcCart/>, color: filter==='meal'?'#FC8019':'#00E676' },
+        { label:'Active Schedules', value:isLoading?'-':`${filteredSchedules.filter((s:any)=>s.status==='active').length}`, icon:<IcCal/>,   color:'#87CEFF' },
+        { label:'Recent Orders',    value:isLoading?'-':`${filteredOrders.length}`,                                          icon:<IcTruck/>, color:'#FF9A6C' },
+        { label:'Hours Saved',      value:isLoading?'-':`${filteredSchedules.filter((s:any)=>s.status==='active').length * 5}`, icon:<IcClock/>, color:'#A78BFA' },
       ];
 
   return (

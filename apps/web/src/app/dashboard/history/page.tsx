@@ -14,12 +14,14 @@ type Order = {
   id: string;
   type: string;
   vendorName: string;
-  swiggyOrderId: string | null; // we store item names here
+  swiggyOrderId: string | null;
   amount: number;
   status: string;
   date: string;
   schedule: { name: string } | null;
 };
+
+type Schedule = { type: string; isActive: boolean; totalAmount: number; };
 
 const statusStyle: Record<string,string> = {
   DELIVERED:'success', SKIPPED:'warn', FAILED:'danger', SCHEDULED:'blue', PENDING:'warn', IN_TRANSIT:'blue'
@@ -35,25 +37,28 @@ function formatDate(dateStr: string) {
 }
 
 export default function HistoryPage() {
-  const [tab, setTab]       = useState<FilterTab>('all');
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [tab, setTab]           = useState<FilterTab>('all');
+  const [orders, setOrders]     = useState<Order[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/orders')
-      .then(res => res.json())
-      .then(data => {
-        setTimeout(() => {
-          if (data.orders) setOrders(data.orders);
-          setIsLoading(false);
-        }, 800);
-      })
-      .catch(() => setIsLoading(false));
+    Promise.all([
+      fetch('/api/orders').then(r => r.json()),
+      fetch('/api/schedules').then(r => r.json()),
+    ]).then(([ordData, schedData]) => {
+      setTimeout(() => {
+        if (ordData.orders) setOrders(ordData.orders);
+        if (schedData.schedules) setSchedules(schedData.schedules);
+        setIsLoading(false);
+      }, 800);
+    }).catch(() => setIsLoading(false));
   }, []);
 
   const filtered     = tab === 'all' ? orders : orders.filter(o => o.type.toLowerCase() === tab);
-  const mealSpent    = orders.filter(o => o.type === 'MEAL'    && o.status === 'DELIVERED').reduce((s,o) => s + o.amount, 0);
-  const grocerySpent = orders.filter(o => o.type === 'GROCERY' && o.status === 'DELIVERED').reduce((s,o) => s + o.amount, 0);
+  // Est. monthly spend from active schedules (same logic as Schedules page)
+  const mealSpent    = schedules.filter(s => s.type==='MEAL'    && s.isActive).reduce((n,s) => n + s.totalAmount * 20, 0);
+  const grocerySpent = schedules.filter(s => s.type==='GROCERY' && s.isActive).reduce((n,s) => n + s.totalAmount * 20, 0);
   const totalSpent   = mealSpent + grocerySpent;
   const skipped      = orders.filter(o => o.status === 'SKIPPED').length;
 
@@ -65,10 +70,10 @@ export default function HistoryPage() {
       {/* Stats */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:20}}>
         {[
-          {label:'Total Spend',    value:isLoading?'-':`₹${totalSpent.toLocaleString()}`,   icon:<IcMoney/>, color:'#FC8019'},
-          {label:'Meal Spend',     value:isLoading?'-':`₹${mealSpent.toLocaleString()}`,    icon:<IcFork/>,  color:'#FF9A6C'},
-          {label:'Grocery Spend',  value:isLoading?'-':`₹${grocerySpent.toLocaleString()}`, icon:<IcCart/>,  color:'#00E676'},
-          {label:'Scheduled',      value:isLoading?'-':`${orders.filter(o=>o.status==='SCHEDULED').length}`, icon:<IcSkip/>,  color:'#F59E0B'},
+          {label:'Est. Meal Spend/mo',    value:isLoading?'-':`₹${mealSpent.toLocaleString()}`,    icon:<IcMoney/>, color:'#FC8019'},
+          {label:'Est. Grocery Spend/mo', value:isLoading?'-':`₹${grocerySpent.toLocaleString()}`, icon:<IcFork/>,  color:'#FF9A6C'},
+          {label:'Est. Total/mo',         value:isLoading?'-':`₹${totalSpent.toLocaleString()}`,   icon:<IcCart/>,  color:'#00E676'},
+          {label:'Scheduled Orders',      value:isLoading?'-':`${orders.filter(o=>o.status==='SCHEDULED').length}`, icon:<IcSkip/>,  color:'#F59E0B'},
         ].map((s,i) => (
           <div key={i} className="stat-card">
             <div style={{width:36,height:36,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:`${s.color}18`,color:s.color,border:`1px solid ${s.color}28`,marginBottom:12}}>{s.icon}</div>
