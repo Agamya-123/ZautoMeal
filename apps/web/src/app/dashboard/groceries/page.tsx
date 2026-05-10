@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const IcCart    = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>;
@@ -20,18 +20,52 @@ const popularBundles = [
   {icon:<IcBox/>,  name:'Home Essentials',  items:'Soap, Shampoo, Detergent',   price:'₹800–1,200',  freq:'Monthly'},
 ];
 
-const initialSchedules = [
-  {id:'g1',label:'Monthly Kitchen Essentials',frequency:'Monthly',dayOfMonth:1,dayOfWeek:'Saturday',nextDelivery:'1st Jun 2026',items:['Basmati Rice 5kg','Toor Dal 2kg','Mustard Oil 1L','Sugar 2kg','Salt 1kg'],amount:1240,store:'Swiggy Instamart',status:'active',alertBefore:'1440'},
-  {id:'g2',label:'Weekly Fresh Produce',       frequency:'Weekly', dayOfMonth:1,dayOfWeek:'Saturday',nextDelivery:'Sat, 10 May', items:['Tomatoes 1kg','Onions 1kg','Spinach 500g','Milk 2L','Curd 400g'],             amount:380, store:'Swiggy Instamart',status:'active',alertBefore:'1440'},
-];
-type GrocSched = typeof initialSchedules[0];
+type GrocSched = {
+  id: string;
+  label: string;
+  frequency: string;
+  dayOfMonth: number;
+  dayOfWeek: string;
+  nextDelivery: string;
+  items: string[];
+  amount: number;
+  store: string;
+  status: string;
+  alertBefore: string;
+};
 
 export default function GroceriesPage() {
   const [activeTab,  setActiveTab]  = useState<'schedules'|'bundles'>('schedules');
-  const [schedules,  setSchedules]  = useState(initialSchedules);
+  const [schedules,  setSchedules]  = useState<GrocSched[]>([]);
+  const [isLoading,  setIsLoading]  = useState(true);
   const [editingId,  setEditingId]  = useState<string|null>(null);
   const [editForm,   setEditForm]   = useState<Partial<GrocSched>>({});
   const [newItem,    setNewItem]    = useState('');
+
+  useEffect(() => {
+    fetch('/api/schedules?type=GROCERY')
+      .then(res => res.json())
+      .then(data => {
+        setTimeout(() => {
+          if (data.schedules) {
+            setSchedules(data.schedules.map((s: any) => ({
+              id: s.id,
+              label: s.name,
+              frequency: s.days.length===7?'Daily':'Weekly',
+              dayOfMonth: 1,
+              dayOfWeek: s.days[0] || 'Saturday',
+              nextDelivery: 'Sat, 10 May',
+              items: s.items.map((i:any)=>i.name),
+              amount: s.totalAmount,
+              store: s.restaurant || 'Swiggy Instamart',
+              status: s.isActive ? 'active' : 'paused',
+              alertBefore: '1440'
+            })));
+          }
+          setIsLoading(false);
+        }, 800);
+      });
+  }, []);
 
   const toggleStatus = (id:string) => setSchedules(p=>p.map(s=>s.id===id?{...s,status:s.status==='active'?'paused':'active'}:s));
   const openEdit     = (s:GrocSched) => { setEditingId(s.id); setEditForm({label:s.label,frequency:s.frequency,dayOfMonth:s.dayOfMonth,dayOfWeek:s.dayOfWeek,items:[...s.items],alertBefore:s.alertBefore}); };
@@ -49,9 +83,9 @@ export default function GroceriesPage() {
       {/* Stats */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:28}}>
         {[
-          {label:'Active Schedules',           value:`${schedules.filter(s=>s.status==='active').length}`, icon:<IcCart/>,  color:'#00E676'},
-          {label:"This Month's Spend",          value:'₹1,620',                                             icon:<IcMoney/>, color:'#FC8019'},
-          {label:'Items on Auto-order',         value:`${schedules.reduce((n,s)=>n+s.items.length,0)}`,   icon:<IcBox/>,   color:'#87CEFF'},
+          {label:'Active Schedules',           value:isLoading?'-':`${schedules.filter(s=>s.status==='active').length}`, icon:<IcCart/>,  color:'#00E676'},
+          {label:"This Month's Spend",         value:isLoading?'-':`₹${schedules.reduce((n,s)=>n+s.amount,0)}`,          icon:<IcMoney/>, color:'#FC8019'},
+          {label:'Items on Auto-order',        value:isLoading?'-':`${schedules.reduce((n,s)=>n+s.items.length,0)}`,   icon:<IcBox/>,   color:'#87CEFF'},
         ].map((s,i) => (
           <div key={i} className="stat-card">
             <div style={{width:36,height:36,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:`${s.color}18`,color:s.color,border:`1px solid ${s.color}28`,marginBottom:12}}>{s.icon}</div>
@@ -71,7 +105,28 @@ export default function GroceriesPage() {
       {/* Schedules */}
       {activeTab==='schedules' && (
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
-          {schedules.map(s => (
+          {isLoading ? (
+            [1,2].map(i => (
+              <div key={i} className="sched-card" style={{padding:'20px 22px', display:'flex', alignItems:'center', gap:14, animation:'pulse 1.5s infinite'}}>
+                <div style={{width:3,height:44,borderRadius:3,background:'rgba(255,255,255,0.05)'}}/>
+                <div style={{width:42,height:42,borderRadius:11,background:'rgba(255,255,255,0.05)'}}/>
+                <div style={{flex:1, display:'flex', flexDirection:'column', gap:8}}>
+                  <div style={{width:160,height:14,borderRadius:4,background:'rgba(255,255,255,0.08)'}}/>
+                  <div style={{width:200,height:12,borderRadius:4,background:'rgba(255,255,255,0.04)'}}/>
+                </div>
+                <div style={{width:100,height:22,borderRadius:6,background:'rgba(255,255,255,0.04)',marginRight:16}}/>
+                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:6,marginRight:12}}>
+                  <div style={{width:50,height:10,borderRadius:3,background:'rgba(255,255,255,0.04)'}}/>
+                  <div style={{width:90,height:12,borderRadius:3,background:'rgba(255,255,255,0.08)'}}/>
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  <div style={{width:70,height:28,borderRadius:6,background:'rgba(255,255,255,0.05)'}}/>
+                  <div style={{width:60,height:28,borderRadius:6,background:'rgba(255,255,255,0.05)'}}/>
+                  <div style={{width:90,height:28,borderRadius:6,background:'rgba(255,255,255,0.05)'}}/>
+                </div>
+              </div>
+            ))
+          ) : schedules.map(s => (
             <div key={s.id} className="sched-card" style={{opacity:s.status==='paused'?0.72:1,transition:'opacity 0.2s'}}>
 
               {editingId!==s.id && (
@@ -144,12 +199,14 @@ export default function GroceriesPage() {
               )}
             </div>
           ))}
-          <div className="sched-card" style={{padding:'28px',textAlign:'center',borderStyle:'dashed',background:'transparent'}}>
-            <div style={{width:40,height:40,borderRadius:10,background:'rgba(0,230,118,0.08)',display:'flex',alignItems:'center',justifyContent:'center',color:'#00E676',margin:'0 auto 12px'}}><IcPlus/></div>
-            <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>Add another grocery schedule</div>
-            <div style={{color:'var(--c-muted)',fontSize:12,marginBottom:16}}>Weekly veggies, monthly staples, or custom bundles.</div>
-            <Link href="/dashboard/groceries/new" className="btn btn-green" style={{fontSize:12}}><IcPlus/>Create Schedule</Link>
-          </div>
+          {!isLoading && (
+            <div className="sched-card" style={{padding:'28px',textAlign:'center',borderStyle:'dashed',background:'transparent'}}>
+              <div style={{width:40,height:40,borderRadius:10,background:'rgba(0,230,118,0.08)',display:'flex',alignItems:'center',justifyContent:'center',color:'#00E676',margin:'0 auto 12px'}}><IcPlus/></div>
+              <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>Add another grocery schedule</div>
+              <div style={{color:'var(--c-muted)',fontSize:12,marginBottom:16}}>Weekly veggies, monthly staples, or custom bundles.</div>
+              <Link href="/dashboard/groceries/new" className="btn btn-green" style={{fontSize:12}}><IcPlus/>Create Schedule</Link>
+            </div>
+          )}
         </div>
       )}
 

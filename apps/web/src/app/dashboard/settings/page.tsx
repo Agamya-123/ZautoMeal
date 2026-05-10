@@ -76,17 +76,19 @@ export default function SettingsPage() {
       fetch('/api/user/settings')
         .then(res => res.json())
         .then(data => {
-          if (data.settings) {
-            setPhone(data.settings.phone || '');
-            setIsPhoneVerified(data.settings.phoneVerified || false);
-            setWhatsapp(data.settings.notifyWhatsapp);
-            setPush(data.settings.notifyPush);
-            setSms(data.settings.notifySms);
-            setAlertTime(data.settings.alertLeadTime.toString());
-            setAutoConfirm(data.settings.autoConfirm);
-            setPauseAll(data.settings.pauseAll);
-          }
-          setIsLoading(false);
+          setTimeout(() => {
+            if (data.settings) {
+              setPhone(data.settings.phone || '');
+              setIsPhoneVerified(data.settings.phoneVerified || false);
+              setWhatsapp(data.settings.notifyWhatsapp);
+              setPush(data.settings.notifyPush);
+              setSms(data.settings.notifySms);
+              setAlertTime(data.settings.alertLeadTime.toString());
+              setAutoConfirm(data.settings.autoConfirm);
+              setPauseAll(data.settings.pauseAll);
+            }
+            setIsLoading(false);
+          }, 800);
         })
         .catch(err => {
           console.error('Failed to load settings:', err);
@@ -186,7 +188,29 @@ export default function SettingsPage() {
   };
 
   if (isLoading) {
-    return <div style={{ padding: '40px 36px', color: 'var(--c-muted)', fontSize: 14 }}>Loading settings...</div>;
+    return (
+      <div style={{padding:'32px 36px', animation:'pulse 1.5s infinite'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:28}}>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            <div style={{width:160,height:28,borderRadius:6,background:'rgba(255,255,255,0.08)'}}/>
+            <div style={{width:240,height:14,borderRadius:4,background:'rgba(255,255,255,0.04)'}}/>
+          </div>
+          <div style={{width:130,height:40,borderRadius:8,background:'rgba(252,128,25,0.15)'}}/>
+        </div>
+        {[1,2,3,4].map(i => (
+          <div key={i} className="stat-card" style={{marginBottom:20}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,paddingBottom:14,borderBottom:'1px solid var(--c-border)'}}>
+              <div style={{width:32,height:32,borderRadius:8,background:'rgba(255,255,255,0.05)'}}/>
+              <div style={{width:120,height:18,borderRadius:4,background:'rgba(255,255,255,0.08)'}}/>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:16}}>
+              <div style={{width:'40%',height:14,borderRadius:4,background:'rgba(255,255,255,0.04)'}}/>
+              <div style={{width:'80%',height:40,borderRadius:8,background:'rgba(255,255,255,0.03)'}}/>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (

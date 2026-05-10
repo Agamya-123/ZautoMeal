@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -14,14 +14,6 @@ const IcCal     = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="no
 const IcPlus    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
 const IcArrow   = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
 
-/* ── Mock data ────────────────────────────────────────────── */
-const mockSchedules = [
-  { id:'s1', type:'meal',    label:'Work Lunch',                  restaurant:'Burger King',      time:'1:00 PM',     days:'Mon–Fri',  status:'active',  nextOrder:'Today 1:00 PM'    },
-  { id:'s2', type:'meal',    label:'Daily Breakfast',             restaurant:'Subway',            time:'8:30 AM',     days:'Daily',    status:'active',  nextOrder:'Tomorrow 8:30 AM' },
-  { id:'s3', type:'grocery', label:'Monthly Kitchen Essentials',  restaurant:'Swiggy Instamart',  time:'1st of month',days:'Monthly',  status:'active',  nextOrder:'1st Jun'          },
-  { id:'s4', type:'grocery', label:'Weekly Fresh Produce',        restaurant:'Swiggy Instamart',  time:'11:00 AM',    days:'Saturday', status:'active',  nextOrder:'Sat 11:00 AM'     },
-  { id:'s5', type:'meal',    label:'Weekend Dinner',              restaurant:'Pizza Hut',         time:'7:30 PM',     days:'Sat–Sun',  status:'paused',  nextOrder:'Sat 7:30 PM'      },
-];
 const mockOrders = [
   { id:'o1', type:'meal',    restaurant:'Burger King',     items:'Whopper + Fries',             amount:349,  status:'DELIVERED', date:'Today',       time:'1:02 PM'  },
   { id:'o2', type:'meal',    restaurant:'Subway',           items:'Veg Delight Sub',             amount:219,  status:'DELIVERED', date:'Today',       time:'8:35 AM'  },
@@ -35,9 +27,33 @@ export default function DashboardPage() {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter]       = useState<Filter>('all');
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/schedules')
+      .then(res => res.json())
+      .then(data => {
+        setTimeout(() => {
+          if (data.schedules) {
+            setSchedules(data.schedules.map((s: any) => ({
+              id: s.id,
+              type: s.type.toLowerCase(),
+              label: s.name,
+              restaurant: s.restaurant,
+              time: s.time || (s.type==='GROCERY'?'11:00 AM':''),
+              days: s.days.length===7?'Daily':s.days.join(','),
+              status: s.isActive ? 'active' : 'paused',
+              nextOrder: 'Tomorrow'
+            })));
+          }
+          setIsLoading(false);
+        }, 800);
+      });
+  }, []);
 
   const filteredOrders    = filter === 'all' ? mockOrders    : mockOrders.filter(o => o.type === filter);
-  const filteredSchedules = filter === 'all' ? mockSchedules : mockSchedules.filter(s => s.type === filter);
+  const filteredSchedules = filter === 'all' ? schedules : schedules.filter(s => s.type === filter);
   const spend = (f: Filter) => mockOrders.filter(o => o.status === 'DELIVERED' && (f === 'all' || o.type === f)).reduce((s, o) => s + o.amount, 0);
   const mealSpent    = spend('meal');
   const grocerySpent = spend('grocery');
@@ -51,10 +67,10 @@ export default function DashboardPage() {
         { label:'Hours Saved',    value:'9',                                   icon:<IcClock/>,  color:'#87CEFF' },
       ]
     : [
-        { label: filter==='meal' ? 'Meal Spent' : 'Grocery Spent', value:`₹${totalSpent.toLocaleString()}`, icon: filter==='meal'?<IcFork/>:<IcCart/>, color: filter==='meal'?'#FC8019':'#00E676' },
-        { label:'Active Schedules', value:`${filteredSchedules.filter(s=>s.status==='active').length}`, icon:<IcCal/>,   color:'#87CEFF' },
-        { label:'Orders',           value:`${filteredOrders.length}`,                                    icon:<IcTruck/>, color:'#FF9A6C' },
-        { label:'Hours Saved',      value:'9',                                                           icon:<IcClock/>, color:'#A78BFA' },
+        { label: filter==='meal' ? 'Meal Spent' : 'Grocery Spent', value:isLoading?'-':`₹${totalSpent.toLocaleString()}`, icon: filter==='meal'?<IcFork/>:<IcCart/>, color: filter==='meal'?'#FC8019':'#00E676' },
+        { label:'Active Schedules', value:isLoading?'-':`${filteredSchedules.filter(s=>s.status==='active').length}`, icon:<IcCal/>,   color:'#87CEFF' },
+        { label:'Orders',           value:isLoading?'-':`${filteredOrders.length}`,                                    icon:<IcTruck/>, color:'#FF9A6C' },
+        { label:'Hours Saved',      value:isLoading?'-':'9',                                                           icon:<IcClock/>, color:'#A78BFA' },
       ];
 
   return (
@@ -115,7 +131,23 @@ export default function DashboardPage() {
           </Link>
         </div>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {filteredSchedules.map(s => {
+          {isLoading ? (
+            [1,2,3].map(i => (
+              <div key={i} className="sched-card" style={{ padding:'16px 20px', display:'flex', alignItems:'center', gap:14, animation:'pulse 1.5s infinite' }}>
+                <div style={{ width:3, height:40, borderRadius:3, background:'rgba(255,255,255,0.05)', flexShrink:0 }}/>
+                <div style={{ width:40, height:40, borderRadius:10, flexShrink:0, background:'rgba(255,255,255,0.05)' }}/>
+                <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
+                  <div style={{ width:120, height:14, borderRadius:4, background:'rgba(255,255,255,0.08)' }}/>
+                  <div style={{ width:180, height:12, borderRadius:4, background:'rgba(255,255,255,0.04)' }}/>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, marginRight:12 }}>
+                  <div style={{ width:40, height:10, borderRadius:3, background:'rgba(255,255,255,0.04)' }}/>
+                  <div style={{ width:80, height:12, borderRadius:3, background:'rgba(255,255,255,0.08)' }}/>
+                </div>
+                <div style={{ width:50, height:22, borderRadius:11, background:'rgba(255,255,255,0.05)' }}/>
+              </div>
+            ))
+          ) : filteredSchedules.map(s => {
             const isGrocery = s.type === 'grocery';
             const accent = isGrocery ? '#00E676' : '#FC8019';
             return (
