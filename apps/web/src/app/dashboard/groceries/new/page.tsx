@@ -300,7 +300,34 @@ export default function NewGrocerySchedulePage() {
             </div>
 
             <button
-              onClick={() => { alert('Grocery schedule activated! (Swiggy Instamart API coming soon)'); router.push('/dashboard/groceries'); }}
+              onClick={async () => {
+                const estPrice = selectedBundle?.est || (form.items.length * 150); // rough estimate
+                const days = form.frequency === 'Weekly' ? [form.dayOfWeek] : ['1st of Month']; // simplification
+                
+                try {
+                  const res = await fetch('/api/schedules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      type: 'GROCERY',
+                      name: form.label,
+                      restaurant: 'Swiggy Instamart', // Default for groceries
+                      time: '11:00 AM', // Default grocery delivery time
+                      days: days,
+                      items: form.items,
+                      totalAmount: estPrice
+                    })
+                  });
+                  if (res.ok) {
+                    router.push('/dashboard/groceries');
+                  } else {
+                    alert('Failed to save schedule');
+                  }
+                } catch (e) {
+                  console.error(e);
+                  alert('Error saving schedule');
+                }
+              }}
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center', fontSize: 15, padding: '14px', background: 'linear-gradient(135deg,#22C55E,#4ADE80)', boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}
             >
