@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 /* ── SVG Icons ─────────────────────────────────────────── */
 const Icons = {
@@ -54,6 +55,7 @@ const NAV = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const { data: session } = useSession();
   let currentSection = '';
 
   return (
@@ -145,7 +147,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Upgrade card */}
-        <div style={{ padding: '10px 12px 22px' }}>
+        <div style={{ padding: '10px 12px' }}>
           <div style={{
             borderRadius: 14, padding: '16px',
             background: 'linear-gradient(135deg, rgba(252,128,25,0.08) 0%, rgba(211,84,0,0.04) 100%)',
@@ -161,6 +163,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Upgrade →
             </Link>
           </div>
+        </div>
+
+        {/* User Profile */}
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 'auto' }}>
+          <Link href="/dashboard/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', padding: '8px', borderRadius: 10, transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <div style={{ width: 32, height: 32, borderRadius: 16, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {session?.user?.image ? (
+                <img src={session.user.image} alt="User" style={{ width: '100%', height: '100%' }} />
+              ) : (
+                <span style={{ color: 'var(--c-text)', fontSize: 12, fontWeight: 700 }}>{session?.user?.name?.[0] || '?'}</span>
+              )}
+            </div>
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {session?.user?.name || 'Guest User'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--c-muted)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {session?.user?.email || 'Not logged in'}
+              </div>
+            </div>
+          </Link>
         </div>
       </aside>
 

@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 const IcUser    = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const IcBell    = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>;
@@ -43,8 +44,10 @@ function ToggleRow({label, desc, value, onChange}: {label:string; desc?:string; 
 }
 
 export default function SettingsPage() {
-  const [name,       setName]       = useState('Agamya');
-  const [email,      setEmail]      = useState('agamya@example.com');
+  const { data: session } = useSession();
+
+  const [name,       setName]       = useState('');
+  const [email,      setEmail]      = useState('');
   const [phone,      setPhone]      = useState('+91 98765 43210');
   const [whatsapp,   setWhatsapp]   = useState(true);
   const [push,       setPush]       = useState(true);
@@ -53,6 +56,13 @@ export default function SettingsPage() {
   const [autoConfirm,setAutoConfirm]= useState(true);
   const [pauseAll,   setPauseAll]   = useState(false);
   const [saved,      setSaved]      = useState(false);
+
+  useEffect(() => {
+    if (session?.user) {
+      setName(session.user.name || '');
+      setEmail(session.user.email || '');
+    }
+  }, [session]);
 
   const save = () => { setSaved(true); setTimeout(()=>setSaved(false),2500); };
 
@@ -109,8 +119,8 @@ export default function SettingsPage() {
       {/* Account */}
       <Section icon={<IcLock/>} title="Account">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-          <div><div style={{fontSize:13,fontWeight:500}}>Google Account</div><div style={{fontSize:12,color:'var(--c-muted)',marginTop:2}}>agamya@example.com</div></div>
-          <span className="badge badge-success"><IcCheck/>Connected</span>
+          <div><div style={{fontSize:13,fontWeight:500}}>Google Account</div><div style={{fontSize:12,color:'var(--c-muted)',marginTop:2}}>{session?.user?.email || 'Not connected'}</div></div>
+          {session ? <span className="badge badge-success"><IcCheck/>Connected</span> : <span className="badge badge-warn">Not Connected</span>}
         </div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
           <div><div style={{fontSize:13,fontWeight:500}}>Swiggy Account</div><div style={{fontSize:12,color:'var(--c-muted)',marginTop:2}}>Link to enable automated ordering</div></div>
@@ -118,7 +128,7 @@ export default function SettingsPage() {
         </div>
         <div className="divider"/>
         <div style={{display:'flex',gap:10,marginTop:16}}>
-          <button className="btn btn-ghost" style={{fontSize:12,color:'var(--c-red)',borderColor:'rgba(239,68,68,0.25)'}} onClick={()=>alert('Sign out?')}>Sign Out</button>
+          <button className="btn btn-ghost" style={{fontSize:12,color:'var(--c-red)',borderColor:'rgba(239,68,68,0.25)'}} onClick={()=>signOut({ callbackUrl: '/login' })}>Sign Out</button>
           <button className="btn btn-ghost" style={{fontSize:12,color:'var(--c-red)',borderColor:'rgba(239,68,68,0.25)'}} onClick={()=>confirm('Delete your account permanently?')}>Delete Account</button>
         </div>
       </Section>
