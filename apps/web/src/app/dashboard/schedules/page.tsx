@@ -38,18 +38,20 @@ export default function SchedulesPage() {
     fetch('/api/schedules?type=MEAL')
       .then(res => res.json())
       .then(data => {
-        if (data.schedules) {
-          setSchedules(data.schedules.map((s: any) => ({
-            ...s,
-            label: s.name,
-            displayDays: s.days,
-            days: s.days.length===7?'Daily':s.days.join(',')==='Mon,Tue,Wed,Thu,Fri'?'Mon–Fri':s.days.join(', '),
-            status: s.isActive ? 'active' : 'paused',
-            nextOrder: 'Tomorrow ' + s.time,
-            amount: s.totalAmount
-          })));
-        }
-        setIsLoading(false);
+        setTimeout(() => {
+          if (data.schedules) {
+            setSchedules(data.schedules.map((s: any) => ({
+              ...s,
+              label: s.name,
+              displayDays: s.days,
+              days: s.days.length===7?'Daily':s.days.join(',')==='Mon,Tue,Wed,Thu,Fri'?'Mon–Fri':s.days.join(', '),
+              status: s.isActive ? 'active' : 'paused',
+              nextOrder: 'Tomorrow ' + s.time,
+              amount: s.totalAmount
+            })));
+          }
+          setIsLoading(false);
+        }, 800);
       });
   }, []);
 
