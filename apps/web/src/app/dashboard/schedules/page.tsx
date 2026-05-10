@@ -96,14 +96,13 @@ export default function SchedulesPage() {
         <Link href="/dashboard/schedules/new" className="btn btn-primary"><IcPlus/> New Meal Schedule</Link>
       </div>
 
-      {isLoading && <div style={{color:'var(--c-muted)', padding:'20px 0'}}>Loading schedules...</div>}
 
       {/* Stats */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:28}}>
         {[
-          {label:'Active Schedules',   value:`${activeCount}`,                   icon:<IcCal/>,   color:'#FC8019'},
-          {label:'Total Schedules',    value:`${schedules.length}`,              icon:<IcFork/>,  color:'#87CEFF'},
-          {label:'Est. Monthly Spend', value:`₹${monthlyEst.toLocaleString()}`, icon:<IcMoney/>, color:'#00E676'},
+          {label:'Active Schedules',   value:isLoading?'-':`${activeCount}`,                   icon:<IcCal/>,   color:'#FC8019'},
+          {label:'Total Schedules',    value:isLoading?'-':`${schedules.length}`,              icon:<IcFork/>,  color:'#87CEFF'},
+          {label:'Est. Monthly Spend', value:isLoading?'-':`₹${monthlyEst.toLocaleString()}`, icon:<IcMoney/>, color:'#00E676'},
         ].map((s,i) => (
           <div key={i} className="stat-card">
             <div style={{width:36,height:36,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:`${s.color}18`,color:s.color,border:`1px solid ${s.color}28`,marginBottom:12}}>{s.icon}</div>
@@ -115,7 +114,28 @@ export default function SchedulesPage() {
 
       {/* Schedules list */}
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
-        {schedules.map(s => (
+        {isLoading ? (
+          [1,2,3].map(i => (
+            <div key={i} className="sched-card" style={{padding:'20px 22px', display:'flex', alignItems:'center', gap:14, animation:'pulse 1.5s infinite'}}>
+              <div style={{width:3,height:44,borderRadius:3,background:'rgba(255,255,255,0.05)'}}/>
+              <div style={{width:42,height:42,borderRadius:11,background:'rgba(255,255,255,0.05)'}}/>
+              <div style={{flex:1, display:'flex', flexDirection:'column', gap:8}}>
+                <div style={{width:120,height:14,borderRadius:4,background:'rgba(255,255,255,0.08)'}}/>
+                <div style={{width:180,height:12,borderRadius:4,background:'rgba(255,255,255,0.04)'}}/>
+              </div>
+              <div style={{width:80,height:22,borderRadius:6,background:'rgba(255,255,255,0.04)',marginRight:16}}/>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:6,marginRight:12}}>
+                <div style={{width:50,height:10,borderRadius:3,background:'rgba(255,255,255,0.04)'}}/>
+                <div style={{width:90,height:12,borderRadius:3,background:'rgba(255,255,255,0.08)'}}/>
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <div style={{width:70,height:28,borderRadius:6,background:'rgba(255,255,255,0.05)'}}/>
+                <div style={{width:60,height:28,borderRadius:6,background:'rgba(255,255,255,0.05)'}}/>
+                <div style={{width:90,height:28,borderRadius:6,background:'rgba(255,255,255,0.05)'}}/>
+              </div>
+            </div>
+          ))
+        ) : schedules.map(s => (
           <div key={s.id} className="sched-card" style={{opacity:s.status==='paused'?0.72:1,transition:'opacity 0.2s'}}>
 
             {/* Normal view */}
@@ -187,12 +207,14 @@ export default function SchedulesPage() {
         ))}
 
         {/* Add CTA */}
-        <div className="sched-card" style={{padding:'28px',textAlign:'center',borderStyle:'dashed',background:'transparent'}}>
-          <div style={{width:40,height:40,borderRadius:10,background:'rgba(252,128,25,0.08)',display:'flex',alignItems:'center',justifyContent:'center',color:'#FC8019',margin:'0 auto 12px'}}><IcPlus/></div>
-          <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>Add a meal schedule</div>
-          <div style={{color:'var(--c-muted)',fontSize:12,marginBottom:16}}>Breakfast, lunch, dinner — any day, any time.</div>
-          <Link href="/dashboard/schedules/new" className="btn btn-primary" style={{fontSize:12}}><IcPlus/>Create Schedule</Link>
-        </div>
+        {!isLoading && (
+          <div className="sched-card" style={{padding:'28px',textAlign:'center',borderStyle:'dashed',background:'transparent'}}>
+            <div style={{width:40,height:40,borderRadius:10,background:'rgba(252,128,25,0.08)',display:'flex',alignItems:'center',justifyContent:'center',color:'#FC8019',margin:'0 auto 12px'}}><IcPlus/></div>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>Add a meal schedule</div>
+            <div style={{color:'var(--c-muted)',fontSize:12,marginBottom:16}}>Breakfast, lunch, dinner — any day, any time.</div>
+            <Link href="/dashboard/schedules/new" className="btn btn-primary" style={{fontSize:12}}><IcPlus/>Create Schedule</Link>
+          </div>
+        )}
       </div>
     </div>
   );
