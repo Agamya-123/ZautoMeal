@@ -3,10 +3,18 @@ import twilio from 'twilio';
 
 export async function POST(req: Request) {
   try {
-    const { phone } = await req.json();
+    let { phone } = await req.json();
 
     if (!phone) {
       return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
+    }
+
+    // Ensure E.164 format (e.g. +91...)
+    phone = phone.replace(/\s+/g, '');
+    if (phone.length === 10 && /^\d+$/.test(phone)) {
+      phone = '+91' + phone;
+    } else if (!phone.startsWith('+')) {
+      phone = '+' + phone;
     }
 
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
