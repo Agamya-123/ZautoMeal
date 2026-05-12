@@ -7,6 +7,8 @@ const IcMoney  = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 const IcFork   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="11" x2="7" y2="22"/><path d="M21 15V2s-4 2-4 9v4a2 2 0 002 2h2z"/></svg>;
 const IcCart   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>;
 const IcSkip   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>;
+const IcFilter = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>;
+const IcDownload = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
 
 type FilterTab = 'all'|'meal'|'grocery';
 
@@ -63,22 +65,26 @@ export default function HistoryPage() {
   const skipped      = orders.filter(o => o.status === 'SKIPPED').length;
 
   return (
-    <div style={{padding:'32px 36px'}}>
-      <h1 style={{marginBottom:4}}>Order History</h1>
-      <p style={{fontSize:13,marginBottom:28}}>All your automated meals and grocery deliveries in one place.</p>
+    <div className="page-container" style={{ padding:'32px 36px' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:28 }}>
+        <div><h1 style={{ marginBottom:4 }}>Order History</h1><p style={{ fontSize:13 }}>A complete log of all automated meals and groceries.</p></div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button className="btn btn-ghost hide-on-mobile"><IcFilter/> Filter</button>
+          <button className="btn btn-ghost hide-on-mobile"><IcDownload/> Export</button>
+        </div>
+      </div>
 
-      {/* Stats */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:20}}>
+      <div className="stats-grid stats-grid-4" style={{ marginBottom:28 }}>
         {[
-          {label:'Est. Meal Spend/mo',    value:isLoading?'-':`₹${mealSpent.toLocaleString()}`,    icon:<IcMoney/>, color:'#FC8019'},
-          {label:'Est. Grocery Spend/mo', value:isLoading?'-':`₹${grocerySpent.toLocaleString()}`, icon:<IcFork/>,  color:'#FF9A6C'},
-          {label:'Est. Total/mo',         value:isLoading?'-':`₹${totalSpent.toLocaleString()}`,   icon:<IcCart/>,  color:'#00E676'},
-          {label:'Scheduled Orders',      value:isLoading?'-':`${orders.filter(o=>o.status==='SCHEDULED').length}`, icon:<IcSkip/>,  color:'#F59E0B'},
+          { label:'Est. Meal Spend/mo',    value:isLoading?'-':`₹${mealSpent.toLocaleString()}`,    icon:<IcMoney/>, color:'#FC8019' },
+          { label:'Est. Grocery Spend/mo', value:isLoading?'-':`₹${grocerySpent.toLocaleString()}`, icon:<IcFork/>,  color:'#FF9A6C' },
+          { label:'Est. Total/mo',         value:isLoading?'-':`₹${totalSpent.toLocaleString()}`,   icon:<IcCart/>,  color:'#00E676' },
+          { label:'Scheduled Orders',      value:isLoading?'-':`${orders.filter(o=>o.status==='SCHEDULED').length}`, icon:<IcSkip/>,  color:'#F59E0B' },
         ].map((s,i) => (
           <div key={i} className="stat-card">
-            <div style={{width:36,height:36,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:`${s.color}18`,color:s.color,border:`1px solid ${s.color}28`,marginBottom:12}}>{s.icon}</div>
-            <div style={{fontSize:26,fontWeight:800,color:s.color,fontFamily:'Space Grotesk',letterSpacing:'-0.02em',marginBottom:4}}>{s.value}</div>
-            <div style={{fontSize:11,color:'var(--c-muted)',letterSpacing:'0.04em',textTransform:'uppercase',fontWeight:600}}>{s.label}</div>
+            <div style={{ width:36, height:36, borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center', background:`${s.color}18`, color:s.color, border:`1px solid ${s.color}28`, marginBottom:12 }}>{s.icon}</div>
+            <div style={{ fontSize:26, fontWeight:800, color:s.color, fontFamily:'Space Grotesk', letterSpacing:'-0.02em', marginBottom:4 }}>{s.value}</div>
+            <div style={{ fontSize:11, color:'var(--c-muted)', letterSpacing:'0.04em', textTransform:'uppercase', fontWeight:600 }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -86,7 +92,7 @@ export default function HistoryPage() {
       {/* Spend bar */}
       {!isLoading && totalSpent > 0 && (
         <div className="glass" style={{borderRadius:12,padding:'12px 18px',marginBottom:24,display:'flex',alignItems:'center',gap:14}}>
-          <span style={{fontSize:11,color:'var(--c-muted)',flexShrink:0,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.04em'}}>Spend split</span>
+          <span className="hide-on-mobile" style={{fontSize:11,color:'var(--c-muted)',flexShrink:0,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.04em'}}>Spend split</span>
           <div style={{flex:1,height:5,borderRadius:3,background:'rgba(255,255,255,0.06)',overflow:'hidden',display:'flex'}}>
             <div style={{width:`${(mealSpent/totalSpent)*100}%`,background:'linear-gradient(90deg,#FC8019,#FF9A6C)',borderRadius:'3px 0 0 3px'}}/>
             <div style={{flex:1,background:'linear-gradient(90deg,#00B85A,#00E676)',borderRadius:'0 3px 3px 0'}}/>
@@ -105,25 +111,24 @@ export default function HistoryPage() {
         ))}
       </div>
 
-      {/* Table header */}
-      <div style={{display:'grid',gridTemplateColumns:'auto 1fr 1fr auto auto',gap:16,padding:'8px 16px',marginBottom:4}}>
-        {['','Restaurant / Schedule','Items','Amount','Status'].map((h,i)=>(
-          <div key={i} style={{fontSize:10,fontWeight:700,color:'var(--c-muted)',textTransform:'uppercase',letterSpacing:'0.06em'}}>{h}</div>
+      <div className="sched-list-header" style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr auto auto', gap:16, padding:'8px 16px', marginBottom:4 }}>
+        {['','Details','Items','Amount','Status'].map((h,i) => (
+          <div key={i} style={{ fontSize:10, fontWeight:700, color:'var(--c-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
         ))}
       </div>
 
-      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+      <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
         {isLoading ? (
           [1,2,3,4].map(i => (
-            <div key={i} className="sched-card" style={{display:'grid',gridTemplateColumns:'auto 1fr 1fr auto auto',gap:16,padding:'14px 16px',alignItems:'center',animation:'pulse 1.5s infinite'}}>
-              <div style={{width:36,height:36,borderRadius:9,background:'rgba(255,255,255,0.05)'}}/>
-              <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                <div style={{width:120,height:13,borderRadius:4,background:'rgba(255,255,255,0.08)'}}/>
-                <div style={{width:160,height:11,borderRadius:4,background:'rgba(255,255,255,0.04)'}}/>
+            <div key={i} className="sched-card" style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr auto auto', gap:16, padding:'14px 16px', alignItems:'center', animation:'pulse 1.5s infinite' }}>
+              <div style={{ width:34, height:34, borderRadius:9, background:'rgba(255,255,255,0.05)' }}/>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                <div style={{ width:120, height:13, borderRadius:4, background:'rgba(255,255,255,0.08)' }}/>
+                <div style={{ width:160, height:11, borderRadius:4, background:'rgba(255,255,255,0.04)' }}/>
               </div>
-              <div style={{width:'70%',height:12,borderRadius:4,background:'rgba(255,255,255,0.04)'}}/>
-              <div style={{width:60,height:16,borderRadius:4,background:'rgba(255,255,255,0.06)'}}/>
-              <div style={{width:70,height:22,borderRadius:11,background:'rgba(255,255,255,0.05)'}}/>
+              <div style={{ width:'60%', height:12, borderRadius:4, background:'rgba(255,255,255,0.04)' }}/>
+              <div style={{ width:50, height:14, borderRadius:4, background:'rgba(255,255,255,0.06)' }}/>
+              <div style={{ width:60, height:22, borderRadius:11, background:'rgba(255,255,255,0.05)' }}/>
             </div>
           ))
         ) : filtered.length === 0 ? (

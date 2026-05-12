@@ -82,7 +82,7 @@ export default function DashboardPage() {
       ];
 
   return (
-    <div style={{ padding: '32px 36px', minHeight: '100vh' }}>
+    <div className="page-container" style={{ minHeight: '100vh' }}>
 
       {/* ── Header ───────────────────────────────────────── */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
@@ -90,7 +90,7 @@ export default function DashboardPage() {
           <h1 style={{ marginBottom:4 }}>Good afternoon, Agamya</h1>
           <p style={{ fontSize:13 }}>Your automated food &amp; grocery hub</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)} style={{ gap:8 }}>
+        <button className="btn btn-primary hide-on-mobile" onClick={() => setShowModal(true)} style={{ gap:8 }}>
           <IcPlus /> New Schedule
         </button>
       </div>
@@ -105,7 +105,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stat cards ───────────────────────────────────── */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:20 }}>
+      <div className="stats-grid stats-grid-4" style={{ marginBottom:20 }}>
         {statCards.map((s,i) => (
           <div key={i} className="stat-card animate-fade-up" style={{ animationDelay:`${i*0.05}s` }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
       {/* ── Spend split bar ──────────────────────────────── */}
       {filter === 'all' && (
         <div className="glass" style={{ borderRadius:12, padding:'12px 18px', marginBottom:24, display:'flex', alignItems:'center', gap:14 }}>
-          <span style={{ fontSize:11, color:'var(--c-muted)', flexShrink:0, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>Spend</span>
+          <span className="hide-on-mobile" style={{ fontSize:11, color:'var(--c-muted)', flexShrink:0, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>Spend</span>
           <div style={{ flex:1, height:5, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', display:'flex' }}>
             <div style={{ width:`${(mealSpent/(mealSpent+grocerySpent))*100}%`, background:'linear-gradient(90deg,#FC8019,#FF9A6C)', borderRadius:'3px 0 0 3px', transition:'width 0.4s' }}/>
             <div style={{ flex:1, background:'linear-gradient(90deg,#00B85A,#00E676)', borderRadius:'0 3px 3px 0' }}/>
@@ -142,13 +142,13 @@ export default function DashboardPage() {
           {isLoading ? (
             [1,2,3].map(i => (
               <div key={i} className="sched-card" style={{ padding:'16px 20px', display:'flex', alignItems:'center', gap:14, animation:'pulse 1.5s infinite' }}>
-                <div style={{ width:3, height:40, borderRadius:3, background:'rgba(255,255,255,0.05)', flexShrink:0 }}/>
+                <div className="hide-on-mobile" style={{ width:3, height:40, borderRadius:3, background:'rgba(255,255,255,0.05)', flexShrink:0 }}/>
                 <div style={{ width:40, height:40, borderRadius:10, flexShrink:0, background:'rgba(255,255,255,0.05)' }}/>
                 <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
                   <div style={{ width:120, height:14, borderRadius:4, background:'rgba(255,255,255,0.08)' }}/>
                   <div style={{ width:180, height:12, borderRadius:4, background:'rgba(255,255,255,0.04)' }}/>
                 </div>
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, marginRight:12 }}>
+                <div className="hide-on-mobile" style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, marginRight:12 }}>
                   <div style={{ width:40, height:10, borderRadius:3, background:'rgba(255,255,255,0.04)' }}/>
                   <div style={{ width:80, height:12, borderRadius:3, background:'rgba(255,255,255,0.08)' }}/>
                 </div>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
               <div key={s.id} className="sched-card">
                 <div style={{ display:'flex', alignItems:'center', gap:14, padding:'16px 20px' }}>
                   {/* Accent bar */}
-                  <div style={{ width:3, height:40, borderRadius:3, background:accent, flexShrink:0 }}/>
+                  <div className="hide-on-mobile" style={{ width:3, height:40, borderRadius:3, background:accent, flexShrink:0 }}/>
                   {/* Icon */}
                   <div style={{ width:40, height:40, borderRadius:10, flexShrink:0, background:`${accent}14`, display:'flex', alignItems:'center', justifyContent:'center', color:accent, border:`1px solid ${accent}22` }}>
                     {isGrocery ? <IcCart/> : <IcFork/>}
@@ -170,11 +170,11 @@ export default function DashboardPage() {
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
                       <span style={{ fontWeight:600, fontSize:14 }}>{s.label}</span>
-                      <span className={`badge badge-${isGrocery?'success':'orange'}`}>{s.type}</span>
+                      <span className={`badge badge-${isGrocery?'success':'orange'} hide-on-mobile`}>{s.type}</span>
                     </div>
-                    <div style={{ color:'var(--c-muted)', fontSize:12 }}>{s.restaurant} · {s.time} · {s.days}</div>
+                    <div style={{ color:'var(--c-muted)', fontSize:12 }}>{s.restaurant} · {s.time} <span className="hide-on-mobile">· {s.days}</span></div>
                   </div>
-                  <div style={{ textAlign:'right', flexShrink:0, marginRight:12 }}>
+                  <div className="hide-on-mobile" style={{ textAlign:'right', flexShrink:0, marginRight:12 }}>
                     <div style={{ fontSize:10, color:'var(--c-muted)', fontWeight:600, letterSpacing:'0.05em', textTransform:'uppercase', marginBottom:3 }}>Next</div>
                     <div style={{ fontSize:13, fontWeight:600 }}>{s.nextOrder}</div>
                   </div>
@@ -196,7 +196,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Table header */}
-        <div style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr auto auto', gap:16, padding:'8px 16px', marginBottom:4 }}>
+        <div className="sched-list-header" style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr auto auto', gap:16, padding:'8px 16px', marginBottom:4 }}>
           {['','Restaurant','Items','Amount','Status'].map((h,i) => (
             <div key={i} style={{ fontSize:10, fontWeight:700, color:'var(--c-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
           ))}

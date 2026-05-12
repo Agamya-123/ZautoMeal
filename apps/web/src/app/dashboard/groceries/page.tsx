@@ -74,23 +74,23 @@ export default function GroceriesPage() {
   const removeItem   = (i:number) => setEditForm(f=>({...f,items:(f.items||[]).filter((_,idx)=>idx!==i)}));
 
   return (
-    <div style={{padding:'32px 36px'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:28}}>
-        <div><h1 style={{marginBottom:4}}>Grocery Schedules</h1><p style={{fontSize:13}}>Auto-deliver weekly or monthly groceries via Swiggy Instamart.</p></div>
-        <Link href="/dashboard/groceries/new" className="btn btn-green"><IcPlus/> New Grocery Schedule</Link>
+    <div className="page-container" style={{ padding:'32px 36px' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:28 }}>
+        <div><h1 style={{ marginBottom:4 }}>Grocery Schedules</h1><p style={{ fontSize:13 }}>Auto-deliver weekly or monthly groceries via Swiggy Instamart.</p></div>
+        <Link href="/dashboard/groceries/new" className="btn btn-green hide-on-mobile"><IcPlus/> New Grocery Schedule</Link>
       </div>
 
       {/* Stats */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:28}}>
+      <div className="stats-grid stats-grid-3" style={{ marginBottom:28 }}>
         {[
-          {label:'Active Schedules',           value:isLoading?'-':`${schedules.filter(s=>s.status==='active').length}`, icon:<IcCart/>,  color:'#00E676'},
-          {label:"This Month's Spend",         value:isLoading?'-':`₹${schedules.reduce((n,s)=>n+s.amount,0)}`,          icon:<IcMoney/>, color:'#FC8019'},
-          {label:'Items on Auto-order',        value:isLoading?'-':`${schedules.reduce((n,s)=>n+s.items.length,0)}`,   icon:<IcBox/>,   color:'#87CEFF'},
+          { label:'Active Schedules',           value:isLoading?'-':`${schedules.filter(s=>s.status==='active').length}`, icon:<IcCart/>,  color:'#00E676' },
+          { label:"This Month's Spend",         value:isLoading?'-':`₹${schedules.reduce((n,s)=>n+s.amount,0)}`,          icon:<IcMoney/>, color:'#FC8019' },
+          { label:'Items on Auto-order',        value:isLoading?'-':`${schedules.reduce((n,s)=>n+s.items.length,0)}`,   icon:<IcBox/>,   color:'#87CEFF' },
         ].map((s,i) => (
           <div key={i} className="stat-card">
-            <div style={{width:36,height:36,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:`${s.color}18`,color:s.color,border:`1px solid ${s.color}28`,marginBottom:12}}>{s.icon}</div>
-            <div style={{fontSize:26,fontWeight:800,color:s.color,fontFamily:'Space Grotesk',letterSpacing:'-0.02em',marginBottom:4}}>{s.value}</div>
-            <div style={{fontSize:11,color:'var(--c-muted)',letterSpacing:'0.04em',textTransform:'uppercase',fontWeight:600}}>{s.label}</div>
+            <div style={{ width:36, height:36, borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center', background:`${s.color}18`, color:s.color, border:`1px solid ${s.color}28`, marginBottom:12 }}>{s.icon}</div>
+            <div style={{ fontSize:26, fontWeight:800, color:s.color, fontFamily:'Space Grotesk', letterSpacing:'-0.02em', marginBottom:4 }}>{s.value}</div>
+            <div style={{ fontSize:11, color:'var(--c-muted)', letterSpacing:'0.04em', textTransform:'uppercase', fontWeight:600 }}>{s.label}</div>
           </div>
         ))}
       </div>

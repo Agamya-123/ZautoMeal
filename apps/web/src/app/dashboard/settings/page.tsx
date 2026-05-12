@@ -214,7 +214,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div style={{padding:'32px 36px'}}>
+    <div className="page-container" style={{ padding:'32px 36px' }}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:28}}>
         <div>
           <h1 style={{marginBottom:4}}>Settings</h1>
@@ -227,7 +227,7 @@ export default function SettingsPage() {
 
       {/* Profile */}
       <Section icon={<IcUser/>} title="Profile">
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div className="stats-grid stats-grid-2" style={{ gap:16 }}>
           <FieldRow label="Full Name"><input value={name} onChange={e=>setName(e.target.value)} placeholder="Your name"/></FieldRow>
           <FieldRow label="Email Address"><input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="your@email.com"/></FieldRow>
           <FieldRow label="Phone / WhatsApp">

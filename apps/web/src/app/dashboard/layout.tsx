@@ -48,6 +48,7 @@ const NAV = [
   { href: '/dashboard',           label: 'Dashboard',  icon: 'grid',     section: null       },
   { href: '/dashboard/schedules', label: 'Meals',      icon: 'calendar', section: 'Automate' },
   { href: '/dashboard/groceries', label: 'Groceries',  icon: 'shopping', section: null       },
+  { href: '/dashboard/warehouse', label: 'Warehouse',  icon: 'grid',     section: 'Testing'  },
   { href: '/dashboard/billing',   label: 'Billing',    icon: 'receipt',  section: 'Account'  },
   { href: '/dashboard/history',   label: 'History',    icon: 'history',  section: null       },
   { href: '/dashboard/settings',  label: 'Settings',   icon: 'settings', section: null       },
@@ -61,8 +62,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
 
-      {/* ── Sidebar ─────────────────────────────────────── */}
-      <aside style={{
+        {/* ── Sidebar (Hidden on Mobile) ─────────────────────────────────────── */}
+      <aside className="hide-on-mobile" style={{
         width: 232, flexShrink: 0,
         background: 'linear-gradient(180deg, rgba(18,18,30,0.98) 0%, rgba(12,12,20,0.99) 100%)',
         borderRight: '1px solid rgba(255,255,255,0.06)',
@@ -189,8 +190,55 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ── Main ─────────────────────────────────────────── */}
       <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+        {/* Mobile Header (Only visible on small screens) */}
+        <div className="show-flex-mobile" style={{
+          display: 'none', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px', borderBottom: '1px solid var(--c-border)',
+          background: 'rgba(14,14,26,0.9)', backdropFilter: 'blur(10px)',
+          position: 'sticky', top: 0, zIndex: 100
+        }}>
+          <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: 'linear-gradient(135deg, rgba(252,128,25,0.25) 0%, rgba(211,84,0,0.15) 100%)',
+              border: '1px solid rgba(252,128,25,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#FC8019" stroke="none">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#EEEEF5' }}>Zautomeal</span>
+          </Link>
+          <Link href="/dashboard/settings" style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {session?.user?.image ? (
+              <img src={session.user.image} alt="User" style={{ width: '100%', height: '100%' }} />
+            ) : (
+              <span style={{ color: 'var(--c-text)', fontSize: 10, fontWeight: 700 }}>{session?.user?.name?.[0] || '?'}</span>
+            )}
+          </Link>
+        </div>
+
         {children}
       </main>
+
+      {/* ── Bottom Navigation (Mobile Only) ──────────────── */}
+      <nav className="show-flex-mobile bottom-nav" style={{ display: 'none' }}>
+        {[
+          { href: '/dashboard',           label: 'Home',      icon: 'grid' },
+          { href: '/dashboard/schedules', label: 'Meals',     icon: 'calendar' },
+          { href: '/dashboard/groceries', label: 'Groceries', icon: 'shopping' },
+          { href: '/dashboard/history',   label: 'History',   icon: 'history' },
+        ].map((item) => {
+          const isActive = item.href === '/dashboard' ? path === '/dashboard' : path.startsWith(item.href);
+          return (
+            <Link key={item.href} href={item.href} className={`bottom-nav-item ${isActive ? 'active' : ''}`}>
+              {Icons[item.icon as keyof typeof Icons]}
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

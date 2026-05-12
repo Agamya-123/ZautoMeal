@@ -57,7 +57,7 @@ export default function NewGrocerySchedulePage() {
     : `${ordinalDay(form.dayOfMonth)} of every month`;
 
   return (
-    <div style={{ padding: '36px 40px' }}>
+    <div className="page-container">
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
         <Link href="/dashboard/groceries" style={{ color: 'var(--brand-muted)', textDecoration: 'none', fontSize: 13 }}>← Grocery Schedules</Link>
@@ -65,7 +65,7 @@ export default function NewGrocerySchedulePage() {
       </div>
 
       {/* Step indicator */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 36 }}>
+      <div className="step-indicator" style={{ display: 'flex', alignItems: 'center', marginBottom: 36 }}>
         {['Items & Bundle', 'Frequency & Timing', 'Confirm'].map((label, i) => {
           const num = i + 1;
           const done   = step > num;
@@ -183,7 +183,7 @@ export default function NewGrocerySchedulePage() {
 
       {/* ═══ STEP 2: Frequency & Timing ══════════════════════════════════ */}
       {step === 2 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div className="stats-grid stats-grid-2" style={{ gap: 20 }}>
           {/* Frequency */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div className="glass" style={{ borderRadius: 18, padding: '24px' }}>
@@ -265,7 +265,7 @@ export default function NewGrocerySchedulePage() {
 
       {/* ═══ STEP 3: Confirm ═════════════════════════════════════════════ */}
       {step === 3 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div className="stats-grid stats-grid-2" style={{ gap: 20 }}>
           <div className="glass" style={{ borderRadius: 18, padding: '28px' }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 20 }}>📋 Schedule Summary</div>
             {[

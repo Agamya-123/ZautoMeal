@@ -492,3 +492,126 @@ input[type="time"] { color-scheme: dark; }
   letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--c-muted); padding: 8px 16px;
 }
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE DESIGN (Mobile First / App-like)
+══════════════════════════════════════════════════════════ */
+
+/* Utility Classes */
+.hide-on-mobile { display: none !important; }
+.show-on-mobile { display: block !important; }
+.show-flex-mobile { display: flex !important; }
+
+/* Grid Utilities */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Mobile default */
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sched-list-header {
+  display: none; /* Hide complex headers on mobile by default */
+}
+
+/* Mobile specific overrides for inline grids (schedules, etc.) */
+@media (max-width: 768px) {
+  /* Make schedule cards stack their contents on mobile */
+  .sched-card > div {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 16px !important;
+  }
+  
+  /* specifically target the row wrappers if they use inline grid */
+  div[style*="grid-template-columns: auto 1fr"] {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+  }
+  
+  /* Fix padding on main containers */
+  .page-container {
+    padding: 20px 16px !important;
+    padding-bottom: 100px !important; /* Space for bottom nav */
+  }
+
+  /* Make pill toggles scrollable horizontally if too wide */
+  .pill-toggle {
+    display: flex !important;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+  .pill-toggle::-webkit-scrollbar { display: none; } /* Chrome */
+  
+  .pill-toggle button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  
+  /* Fix the step indicator on mobile */
+  .step-indicator {
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+}
+
+/* Tablet & Desktop */
+@media (min-width: 769px) {
+  .hide-on-mobile { display: block !important; }
+  .hide-flex-on-mobile { display: flex !important; }
+  .show-on-mobile { display: none !important; }
+  .show-flex-mobile { display: none !important; }
+  
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .stats-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .stats-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .stats-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  
+  .sched-list-header {
+    display: grid !important;
+  }
+  
+  .page-container {
+    padding: 32px 36px !important;
+  }
+}
+
+/* Bottom Nav for Mobile */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(18,18,30,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 12px 24px 12px; /* Extra bottom padding for iOS home indicator */
+  z-index: 1000;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--c-muted);
+  font-size: 10px;
+  font-weight: 600;
+  transition: color var(--transition);
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+.bottom-nav-item.active {
+  color: var(--c-orange);
+  background: rgba(252,128,25,0.1);
+}
+
+.bottom-nav-item svg {
+  margin-bottom: 2px;
+}

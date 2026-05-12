@@ -39,7 +39,7 @@ export default function BillingPage() {
   const total = mealSpend + grocerySpend;
 
   return (
-    <div style={{padding:'32px 36px'}}>
+    <div className="page-container" style={{ padding:'32px 36px' }}>
       <h1 style={{marginBottom:4}}>Billing &amp; Plans</h1>
       <p style={{fontSize:13,marginBottom:24}}>Manage your subscription and track spending.</p>
 
@@ -59,11 +59,11 @@ export default function BillingPage() {
               <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Current Plan: <span className="gradient-text">Free</span></div>
               <div style={{color:'var(--c-muted)',fontSize:13}}>No billing cycle · Upgrade anytime</div>
             </div>
-            <button onClick={()=>setTab('plans')} className="btn btn-primary">Upgrade Plan</button>
+            <button onClick={()=>setTab('plans')} className="btn btn-primary hide-on-mobile">Upgrade Plan</button>
           </div>
 
           {/* Usage cards */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+          <div className="stats-grid stats-grid-2" style={{marginBottom:20}}>
             {[
               {icon:<IcFork/>,label:'Meal Schedules',    used:mealSchedules.length,    limit:1,   spend:mealSpend,    color:'#FC8019', hasLimit:true,  locked:false},
               {icon:<IcCart/>,label:'Grocery Schedules', used:grocerySchedules.length, limit:0,   spend:grocerySpend, color:'#00E676', hasLimit:false, locked:true},
@@ -92,7 +92,7 @@ export default function BillingPage() {
           {/* Spend breakdown */}
           <div className="stat-card">
             <div style={{fontWeight:600,fontSize:14,marginBottom:18}}>Monthly Spending Breakdown</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+            <div className="stats-grid stats-grid-3">
               {[
                 {label:'Meals this month',     value:isLoading?'…':`₹${mealSpend.toLocaleString()}`,    color:'#FC8019'},
                 {label:'Groceries this month', value:isLoading?'…':`₹${grocerySpend.toLocaleString()}`, color:'#F59E0B'},
@@ -112,7 +112,7 @@ export default function BillingPage() {
       {tab==='plans' && (
         <div>
           <p style={{fontSize:13,marginBottom:24}}>All plans include both <strong style={{color:'var(--c-text)'}}>meal</strong> and <strong style={{color:'var(--c-text)'}}>grocery</strong> automation (limits vary).</p>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:16}}>
+          <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap:16 }}>
             {plans.map(plan=>(
               <div key={plan.id} style={{
                 background: plan.highlight ? 'rgba(252,128,25,0.05)' : 'var(--c-card)',
