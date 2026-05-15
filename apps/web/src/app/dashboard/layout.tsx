@@ -46,8 +46,7 @@ const Icons = {
 
 const NAV = [
   { href: '/dashboard',           label: 'Dashboard',  icon: 'grid',     section: null       },
-  { href: '/dashboard/schedules', label: 'Meals',      icon: 'calendar', section: 'Automate' },
-  { href: '/dashboard/groceries', label: 'Groceries',  icon: 'shopping', section: null       },
+  { href: '/dashboard/showcase',  label: 'Showcase',   icon: 'calendar', section: 'Automate' },
   { href: '/dashboard/warehouse', label: 'Warehouse',  icon: 'grid',     section: 'Testing'  },
   { href: '/dashboard/billing',   label: 'Billing',    icon: 'receipt',  section: 'Account'  },
   { href: '/dashboard/history',   label: 'History',    icon: 'history',  section: null       },
