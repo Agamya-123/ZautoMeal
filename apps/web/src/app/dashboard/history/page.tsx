@@ -10,7 +10,7 @@ const IcSkip   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 const IcFilter = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>;
 const IcDownload = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
 
-type FilterTab = 'all'|'meal'|'grocery';
+type FilterTab = 'all'|'meal'|'grocery'|'pharmacy';
 
 type Order = {
   id: string;
@@ -59,9 +59,10 @@ export default function HistoryPage() {
 
   const filtered     = tab === 'all' ? orders : orders.filter(o => o.type.toLowerCase() === tab);
   // Est. monthly spend from active schedules (same logic as Schedules page)
-  const mealSpent    = schedules.filter(s => s.type==='MEAL'    && s.isActive).reduce((n,s) => n + s.totalAmount * 20, 0);
-  const grocerySpent = schedules.filter(s => s.type==='GROCERY' && s.isActive).reduce((n,s) => n + s.totalAmount * 20, 0);
-  const totalSpent   = mealSpent + grocerySpent;
+  const mealSpent    = schedules.filter(s => (s.type==='MEAL' || s.type==='meal')    && s.isActive).reduce((n,s) => n + s.totalAmount * 20, 0);
+  const grocerySpent = schedules.filter(s => (s.type==='GROCERY' || s.type==='grocery') && s.isActive).reduce((n,s) => n + s.totalAmount * 20, 0);
+  const pharmacySpent = schedules.filter(s => (s.type==='PHARMACY' || s.type==='pharmacy') && s.isActive).reduce((n,s) => n + s.totalAmount * 20, 0);
+  const totalSpent   = mealSpent + grocerySpent + pharmacySpent;
   const skipped      = orders.filter(o => o.status === 'SKIPPED').length;
 
   return (
@@ -77,7 +78,7 @@ export default function HistoryPage() {
       <div className="stats-grid stats-grid-4" style={{ marginBottom:28 }}>
         {[
           { label:'Est. Meal Spend/mo',    value:isLoading?'-':`₹${mealSpent.toLocaleString()}`,    icon:<IcMoney/>, color:'#FC8019' },
-          { label:'Est. Grocery Spend/mo', value:isLoading?'-':`₹${grocerySpent.toLocaleString()}`, icon:<IcFork/>,  color:'#FF9A6C' },
+          { label:'Est. Pharmacy Spend/mo',value:isLoading?'-':`₹${pharmacySpent.toLocaleString()}`,icon:<IcBox/>,   color:'#A78BFA' },
           { label:'Est. Total/mo',         value:isLoading?'-':`₹${totalSpent.toLocaleString()}`,   icon:<IcCart/>,  color:'#00E676' },
           { label:'Scheduled Orders',      value:isLoading?'-':`${orders.filter(o=>o.status==='SCHEDULED').length}`, icon:<IcSkip/>,  color:'#F59E0B' },
         ].map((s,i) => (
@@ -90,21 +91,21 @@ export default function HistoryPage() {
       </div>
 
       {/* Spend bar */}
-      {!isLoading && totalSpent > 0 && (
         <div className="glass" style={{borderRadius:12,padding:'12px 18px',marginBottom:24,display:'flex',alignItems:'center',gap:14}}>
           <span className="hide-on-mobile" style={{fontSize:11,color:'var(--c-muted)',flexShrink:0,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.04em'}}>Spend split</span>
           <div style={{flex:1,height:5,borderRadius:3,background:'rgba(255,255,255,0.06)',overflow:'hidden',display:'flex'}}>
             <div style={{width:`${(mealSpent/totalSpent)*100}%`,background:'linear-gradient(90deg,#FC8019,#FF9A6C)',borderRadius:'3px 0 0 3px'}}/>
-            <div style={{flex:1,background:'linear-gradient(90deg,#00B85A,#00E676)',borderRadius:'0 3px 3px 0'}}/>
+            <div style={{width:`${(grocerySpent/totalSpent)*100}%`,background:'linear-gradient(90deg,#00B85A,#00E676)'}}/>
+            <div style={{flex:1,background:'linear-gradient(90deg,#8B5CF6,#A78BFA)',borderRadius:'0 3px 3px 0'}}/>
           </div>
-          <span style={{fontSize:12,color:'#FC8019',flexShrink:0,fontWeight:700}}>₹{mealSpent.toLocaleString()} meals</span>
-          <span style={{fontSize:12,color:'#00E676',flexShrink:0,fontWeight:700}}>₹{grocerySpent.toLocaleString()} grocery</span>
+          <span style={{fontSize:12,color:'#FC8019',flexShrink:0,fontWeight:700}}>₹{mealSpent.toLocaleString()} M</span>
+          <span style={{fontSize:12,color:'#00E676',flexShrink:0,fontWeight:700}}>₹{grocerySpent.toLocaleString()} G</span>
+          <span style={{fontSize:12,color:'#A78BFA',flexShrink:0,fontWeight:700}}>₹{pharmacySpent.toLocaleString()} P</span>
         </div>
-      )}
 
       {/* Filter */}
       <div className="pill-toggle" style={{marginBottom:20}}>
-        {([{k:'all',l:'All'},{k:'meal',l:'Meals'},{k:'grocery',l:'Groceries'}] as {k:FilterTab,l:string}[]).map(t => (
+        {([{k:'all',l:'All'},{k:'meal',l:'Meals'},{k:'grocery',l:'Groceries'},{k:'pharmacy',l:'Pharmacy'}] as {k:FilterTab,l:string}[]).map(t => (
           <button key={t.k} className={tab===t.k?'active':''} onClick={()=>setTab(t.k)}>
             {t.l} <span style={{opacity:0.55,fontSize:11,fontWeight:400}}>({isLoading?'…':(t.k==='all'?orders:orders.filter(o=>o.type.toLowerCase()===t.k)).length})</span>
           </button>
@@ -136,15 +137,16 @@ export default function HistoryPage() {
             No orders found. Create a schedule to get started!
           </div>
         ) : filtered.map(o => {
-          const isGrocery = o.type === 'GROCERY';
-          const accent = isGrocery ? '#00E676' : '#FC8019';
+          const isGrocery = o.type.toLowerCase() === 'grocery';
+          const isPharmacy = o.type.toLowerCase() === 'pharmacy';
+          const accent = isPharmacy ? '#A78BFA' : isGrocery ? '#00E676' : '#FC8019';
           const itemsDisplay = o.swiggyOrderId || '—';
           const dateStr = formatDate(o.date);
           const timeStr = new Date(o.date).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
           return (
             <div key={o.id} className="sched-card" style={{display:'grid',gridTemplateColumns:'auto 1fr 1fr auto auto',gap:16,padding:'14px 16px',alignItems:'center'}}>
               <div style={{width:36,height:36,borderRadius:9,flexShrink:0,background:`${accent}12`,display:'flex',alignItems:'center',justifyContent:'center',color:accent,border:`1px solid ${accent}22`}}>
-                {isGrocery ? <IcBox/> : <IcTruck/>}
+                {isPharmacy || isGrocery ? <IcBox/> : <IcTruck/>}
               </div>
               <div>
                 <div style={{fontWeight:600,fontSize:13}}>{o.vendorName}</div>

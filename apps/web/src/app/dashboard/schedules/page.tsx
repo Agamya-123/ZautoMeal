@@ -112,7 +112,7 @@ export default function SchedulesPage() {
     <div className="page-container" style={{ padding:'32px 36px', maxWidth: 1200, margin: '0 auto', color: '#FFFFFF' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:28 }}>
         <div><h1 style={{ marginBottom:4, color: '#FFFFFF' }}>Meal Schedules</h1><p style={{ fontSize:13, color: 'rgba(255,255,255,0.6)' }}>Automate your meals — orders placed automatically on your schedule.</p></div>
-        <Link href="/dashboard/schedules/new" className="btn btn-primary hide-on-mobile"><IcPlus/> New Meal Schedule</Link>
+        <Link href="/dashboard/showcase" className="btn btn-primary hide-on-mobile"><IcPlus/> New Meal Schedule</Link>
       </div>
 
       <div className="stats-grid stats-grid-2" style={{ marginBottom:28 }}>
@@ -141,9 +141,6 @@ export default function SchedulesPage() {
                 <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>{s.restaurant}</div>
               </div>
             </div>
-            <button onClick={() => runSimulation(s)} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', background:'linear-gradient(135deg, #FC8019 0%, #D35400 100%)', border: 'none', color: '#FFF', padding: '10px', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
-              {simulatingId === s.id ? 'Starting Pipeline...' : 'Test A-TROS'}
-            </button>
           </div>
         ))}
       </div>
@@ -155,12 +152,12 @@ export default function SchedulesPage() {
             {/* Left: Console Logs */}
             <div style={{ flex: 1.2 }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 20 }}>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#FFF' }}>A-TROS Live Console</h2>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#FFF' }}>Autonomous Execution Console</h2>
                 <span style={{ fontSize: 11, padding: '4px 12px', borderRadius: 20, background: 'rgba(252,128,25,0.1)', color: '#FC8019', fontWeight: 700 }}>{testState.current_os}</span>
               </div>
               
               <div style={{ background:'#000', borderRadius: 16, padding: 24, fontFamily: 'monospace', fontSize: 13, lineHeight: 1.8, height: 460, overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', display:'flex', flexDirection:'column', gap: 12 }}>
-                {testState.logs.length === 0 && <div style={{ color: 'rgba(255,255,255,0.3)' }}>Waiting for engine initialization...</div>}
+                {testState.logs.length === 0 && <div style={{ color: 'rgba(255,255,255,0.3)' }}>Waiting for system initialization...</div>}
                 {testState.logs.map((log: string, i: number) => (
                   <div key={i} style={{ color: log.includes('✅') || log.includes('SUCCESS') ? '#00E676' : log.includes('❌') ? '#FF3B30' : log.includes('STATE') ? '#87CEFF' : '#FFFFFF', opacity: i === (testState.logs.length - 1) ? 1 : 0.5 }}>{log}</div>
                 ))}
@@ -168,7 +165,7 @@ export default function SchedulesPage() {
                   <div style={{ marginTop: 12, padding: 14, background: 'rgba(252,128,25,0.05)', border: '1px dashed rgba(252,128,25,0.2)', borderRadius: 12, color: '#FC8019', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>
                     ⚡ AWAITING YOUR INPUT
                   </div>
-                )}
+                )/* A-TROS Debranded */}
               </div>
               <button onClick={() => { setShowSim(false); sendTestControl('RESET', null); }} style={{ width: '100%', marginTop: 24, padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFF', cursor: 'pointer' }}>Close Console</button>
             </div>

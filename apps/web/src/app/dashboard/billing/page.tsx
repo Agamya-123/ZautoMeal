@@ -8,15 +8,10 @@ const IcMoney   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 const IcCheck   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
 
 
-const plans = [
-  {id:'free',    name:'Free',    price:0,   meals:'1 schedule/day',       groceries:'Not available',         features:['Push notifications','7-day history'],                               current:true,  highlight:false},
-  {id:'starter', name:'Starter', price:99,  meals:'Up to 3 meals/day',    groceries:'1 monthly schedule',    features:['WhatsApp alerts','30-day history','Multi-address'],                current:false, highlight:false},
-  {id:'pro',     name:'Pro',     price:199, meals:'Unlimited meals',      groceries:'Unlimited schedules',   features:['Weekly & monthly delivery','AI suggestions','Budget tracker','Family mode (2)','Priority support'], current:false, highlight:true },
-  {id:'premium', name:'Premium', price:399, meals:'Unlimited meals',      groceries:'Unlimited schedules',   features:['Smart restocking AI','Family mode (5)','Custom cron rules','Dedicated support'],                   current:false, highlight:false},
-];
+// All plans removed - features are free
 
 export default function BillingPage() {
-  const [tab, setTab] = useState<'overview'|'plans'|'invoices'>('overview');
+  const [tab, setTab] = useState<'overview'|'invoices'>('overview');
   const [schedules, setSchedules] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,20 +27,23 @@ export default function BillingPage() {
       .catch(() => setIsLoading(false));
   }, []);
 
-  const mealSchedules    = schedules.filter(s => s.type === 'MEAL'    && s.isActive);
-  const grocerySchedules = schedules.filter(s => s.type === 'GROCERY' && s.isActive);
+  const mealSchedules    = schedules.filter(s => (s.type === 'MEAL' || s.type === 'meal')    && s.isActive);
+  const grocerySchedules = schedules.filter(s => (s.type === 'GROCERY' || s.type === 'grocery') && s.isActive);
+  const pharmacySchedules = schedules.filter(s => (s.type === 'PHARMACY' || s.type === 'pharmacy') && s.isActive);
+  
   const mealSpend    = mealSchedules.reduce((n,s) => n + s.totalAmount * 20, 0);
   const grocerySpend = grocerySchedules.reduce((n,s) => n + s.totalAmount * 20, 0);
-  const total = mealSpend + grocerySpend;
+  const pharmacySpend = pharmacySchedules.reduce((n,s) => n + s.totalAmount * 20, 0);
+  const total = mealSpend + grocerySpend + pharmacySpend;
 
   return (
     <div className="page-container" style={{ padding:'32px 36px' }}>
-      <h1 style={{marginBottom:4}}>Billing &amp; Plans</h1>
-      <p style={{fontSize:13,marginBottom:24}}>Manage your subscription and track spending.</p>
+      <h1 style={{marginBottom:4}}>Spending &amp; Usage</h1>
+      <p style={{fontSize:13,marginBottom:24}}>Track your automated spending and monthly usage metrics.</p>
 
       {/* Tabs */}
       <div className="pill-toggle" style={{marginBottom:28}}>
-        {([{k:'overview',l:'Overview'},{k:'plans',l:'Plans'},{k:'invoices',l:'Invoices'}] as {k:'overview'|'plans'|'invoices',l:string}[]).map(t=>(
+        {([{k:'overview',l:'Overview'},{k:'invoices',l:'Invoices'}] as {k:'overview'|'invoices',l:string}[]).map(t=>(
           <button key={t.k} className={tab===t.k?'active':''} onClick={()=>setTab(t.k)}>{t.l}</button>
         ))}
       </div>
@@ -53,20 +51,13 @@ export default function BillingPage() {
       {/* Overview */}
       {tab==='overview' && (
         <div>
-          {/* Plan banner */}
-          <div style={{borderRadius:16,padding:'20px 24px',marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'center',background:'rgba(252,128,25,0.06)',border:'1px solid rgba(252,128,25,0.18)'}}>
-            <div>
-              <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Current Plan: <span className="gradient-text">Free</span></div>
-              <div style={{color:'var(--c-muted)',fontSize:13}}>No billing cycle · Upgrade anytime</div>
-            </div>
-            <button onClick={()=>setTab('plans')} className="btn btn-primary hide-on-mobile">Upgrade Plan</button>
-          </div>
 
           {/* Usage cards */}
-          <div className="stats-grid stats-grid-2" style={{marginBottom:20}}>
+          <div className="stats-grid stats-grid-3" style={{marginBottom:20}}>
             {[
-              {icon:<IcFork/>,label:'Meal Schedules',    used:mealSchedules.length,    limit:1,   spend:mealSpend,    color:'#FC8019', hasLimit:true,  locked:false},
-              {icon:<IcCart/>,label:'Grocery Schedules', used:grocerySchedules.length, limit:0,   spend:grocerySpend, color:'#00E676', hasLimit:false, locked:true},
+              {icon:<IcFork/>,label:'Meal Schedules',    used:mealSchedules.length,    spend:mealSpend,    color:'#FC8019'},
+              {icon:<IcCart/>,label:'Grocery Schedules', used:grocerySchedules.length, spend:grocerySpend, color:'#00E676'},
+              {icon:<IcCard/>,label:'Pharmacy Schedules',used:pharmacySchedules.length,spend:pharmacySpend,color:'#A78BFA'},
             ].map((s,i)=>(
               <div key={i} className="stat-card">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
@@ -74,17 +65,12 @@ export default function BillingPage() {
                     <div style={{width:34,height:34,borderRadius:9,background:`${s.color}14`,display:'flex',alignItems:'center',justifyContent:'center',color:s.color,border:`1px solid ${s.color}22`}}>{s.icon}</div>
                     <span style={{fontWeight:600,fontSize:14}}>{s.label}</span>
                   </div>
-                  <span className={`badge badge-${s.locked?'warn':s.used>=s.limit&&s.hasLimit?'orange':'success'}`}>
-                    {s.locked?'Locked':s.hasLimit?`${s.used}/${s.limit}`:'Active'}
-                  </span>
+                  <span className="badge badge-success">Active</span>
                 </div>
                 <div style={{height:4,background:'rgba(255,255,255,0.07)',borderRadius:2,marginBottom:12}}>
-                  <div style={{height:4,borderRadius:2,width:s.hasLimit&&s.limit>0?`${Math.min((s.used/s.limit)*100,100)}%`:s.locked?'0%':'100%',background:`linear-gradient(90deg,${s.color},${s.color}aa)`}}/>
+                  <div style={{height:4,borderRadius:2,width:'100%',background:`linear-gradient(90deg,${s.color},${s.color}aa)`}}/>
                 </div>
-                {!s.locked
-                  ? <div style={{fontSize:12,color:'var(--c-muted)'}}>Est. monthly: <strong style={{color:'var(--c-text)'}}>₹{isLoading?'…':s.spend.toLocaleString()}</strong></div>
-                  : <div style={{fontSize:12,color:'var(--c-muted)'}}>Not on Free plan. <button onClick={()=>setTab('plans')} style={{background:'none',border:'none',color:'#FC8019',cursor:'pointer',fontSize:12,fontWeight:600,padding:0}}>Upgrade →</button></div>
-                }
+                <div style={{fontSize:12,color:'var(--c-muted)'}}>Est. monthly: <strong style={{color:'var(--c-text)'}}>₹{isLoading?'…':s.spend.toLocaleString()}</strong></div>
               </div>
             ))}
           </div>
@@ -92,11 +78,12 @@ export default function BillingPage() {
           {/* Spend breakdown */}
           <div className="stat-card">
             <div style={{fontWeight:600,fontSize:14,marginBottom:18}}>Monthly Spending Breakdown</div>
-            <div className="stats-grid stats-grid-3">
+            <div className="stats-grid stats-grid-4">
               {[
-                {label:'Meals this month',     value:isLoading?'…':`₹${mealSpend.toLocaleString()}`,    color:'#FC8019'},
-                {label:'Groceries this month', value:isLoading?'…':`₹${grocerySpend.toLocaleString()}`, color:'#F59E0B'},
-                {label:'Est. total / month',   value:isLoading?'…':`₹${total.toLocaleString()}`,         color:'#00E676'},
+                {label:'Meals /mo',        value:isLoading?'…':`₹${mealSpend.toLocaleString()}`,    color:'#FC8019'},
+                {label:'Groceries /mo',    value:isLoading?'…':`₹${grocerySpend.toLocaleString()}`, color:'#00E676'},
+                {label:'Pharmacy /mo',     value:isLoading?'…':`₹${pharmacySpend.toLocaleString()}`,color:'#A78BFA'},
+                {label:'Total Est. /mo',   value:isLoading?'…':`₹${total.toLocaleString()}`,         color:'#FFF'},
               ].map((s,i)=>(
                 <div key={i} style={{background:'rgba(255,255,255,0.02)',borderRadius:10,padding:'14px',border:'1px solid var(--c-border)'}}>
                   <div style={{fontSize:11,color:'var(--c-muted)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.04em',fontWeight:600}}>{s.label}</div>
@@ -154,13 +141,30 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Invoices */}
       {tab==='invoices' && (
-        <div className="stat-card" style={{padding:'48px',textAlign:'center'}}>
-          <div style={{width:48,height:48,borderRadius:12,background:'rgba(252,128,25,0.08)',display:'flex',alignItems:'center',justifyContent:'center',color:'#FC8019',margin:'0 auto 16px',border:'1px solid rgba(252,128,25,0.18)'}}><IcCard/></div>
-          <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>No invoices yet</div>
-          <div style={{color:'var(--c-muted)',fontSize:13}}>You're on the Free plan. Upgrade to get monthly invoices and receipts.</div>
-          <button onClick={()=>setTab('plans')} className="btn btn-primary" style={{marginTop:20}}>View Plans</button>
+        <div className="stat-card" style={{ padding:0, overflow:'hidden' }}>
+          <div style={{ padding:'20px 24px', borderBottom:'1px solid var(--c-border)', fontWeight:600, fontSize:14 }}>Recent Invoices</div>
+          {schedules.length === 0 ? (
+            <div style={{padding:'48px',textAlign:'center'}}>
+              <div style={{width:48,height:48,borderRadius:12,background:'rgba(252,128,25,0.08)',display:'flex',alignItems:'center',justifyContent:'center',color:'#FC8019',margin:'0 auto 16px',border:'1px solid rgba(252,128,25,0.18)'}}><IcCard/></div>
+              <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>No invoices yet</div>
+              <div style={{color:'var(--c-muted)',fontSize:13}}>Transactions from the showcase simulation will appear here.</div>
+            </div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column' }}>
+              {schedules.map((s,i) => (
+                <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 1fr auto auto', gap:20, padding:'16px 24px', alignItems:'center', borderBottom: i===schedules.length-1?'none':'1px solid rgba(255,255,255,0.04)' }}>
+                  <div>
+                    <div style={{ fontWeight:600, fontSize:13 }}>INV-{s.id.slice(-6).toUpperCase()}</div>
+                    <div style={{ fontSize:11, color:'var(--c-muted)', marginTop:2 }}>{new Date(s.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}</div>
+                  </div>
+                  <div style={{ fontSize:13, color:'var(--c-muted)' }}>{s.name}</div>
+                  <div style={{ fontWeight:700, fontSize:14 }}>₹{s.totalAmount.toLocaleString()}</div>
+                  <span className="badge badge-success" style={{ padding:'4px 10px' }}>PAID</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

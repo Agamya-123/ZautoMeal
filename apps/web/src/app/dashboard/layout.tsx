@@ -47,7 +47,6 @@ const Icons = {
 const NAV = [
   { href: '/dashboard',           label: 'Dashboard',  icon: 'grid',     section: null       },
   { href: '/dashboard/showcase',  label: 'Showcase',   icon: 'calendar', section: 'Automate' },
-  { href: '/dashboard/warehouse', label: 'Warehouse',  icon: 'grid',     section: 'Testing'  },
   { href: '/dashboard/billing',   label: 'Billing',    icon: 'receipt',  section: 'Account'  },
   { href: '/dashboard/history',   label: 'History',    icon: 'history',  section: null       },
   { href: '/dashboard/settings',  label: 'Settings',   icon: 'settings', section: null       },
@@ -146,24 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        {/* Upgrade card */}
-        <div style={{ padding: '10px 12px' }}>
-          <div style={{
-            borderRadius: 14, padding: '16px',
-            background: 'linear-gradient(135deg, rgba(252,128,25,0.08) 0%, rgba(211,84,0,0.04) 100%)',
-            border: '1px solid rgba(252,128,25,0.18)',
-            boxShadow: '0 0 30px rgba(252,128,25,0.05), inset 0 1px 0 rgba(255,255,255,0.06)',
-            position: 'relative', overflow: 'hidden',
-          }}>
-            {/* decorative glow circle */}
-            <div style={{ position:'absolute', top:-20, right:-20, width:80, height:80, borderRadius:'50%', background:'radial-gradient(circle,rgba(252,128,25,0.15),transparent)', pointerEvents:'none' }}/>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#FC8019', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5 }}>Free Plan</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', marginBottom: 12, lineHeight: 1.5 }}>Unlock grocery automation &amp; unlimited schedules.</div>
-            <Link href="/dashboard/billing" className="btn btn-primary" style={{ width: '100%', padding: '8px 12px', fontSize: 12, justifyContent: 'center' }}>
-              Upgrade →
-            </Link>
-          </div>
-        </div>
+        {/* Upgrade card removed — all features free */}
 
         {/* User Profile */}
         <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 'auto' }}>

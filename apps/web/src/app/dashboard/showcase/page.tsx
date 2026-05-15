@@ -157,17 +157,26 @@ export default function ShowcasePage() {
       return;
     }
 
+    const totalAmount = cart.reduce((acc, i) => acc + (parseInt(i.price.replace('₹', '')) * i.quantity), 0);
     lastAnsweredLogRef.current = "";
     setTestState({ logs: [], current_os: 'IDLE', isRunning: true, no_response_preference: schedule.automationPreference });
     await fetch('/api/test/atros-v3', { method: 'POST', body: JSON.stringify({ action: 'RESET' }) });
     const productList = cart.map(i => `${i.quantity}x ${i.name}`).join(', ');
-    await fetch('/api/test/atros-v3', { 
-      method: 'POST', 
-      body: JSON.stringify({ 
-        action: 'RUN_PIPELINE', 
-        rio: { automation_id: `PATENT-MULTI-${cart.length}`, products: productList, schedule: schedule } 
-      }) 
-    });
+    const typeMap: Record<string, string> = { meals: 'MEAL', groceries: 'GROCERY', pharmacy: 'PHARMACY' };
+    const finalType = typeMap[selectedCategory || 'meals'] || 'MEAL';
+
+    const res = await fetch('/api/test/atros-v3', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'RUN_PIPELINE', 
+          rio: { 
+            automation_id: `PATENT-MULTI-${cart.length}`, 
+            products: productList, 
+            schedule: { ...schedule, type: finalType, totalAmount: totalAmount } 
+          } 
+        })
+      });
     setActiveStep(3);
   };
 
@@ -245,9 +254,8 @@ export default function ShowcasePage() {
         {/* --- HEADER (Hidden in Step 3) --- */}
         {activeStep !== 3 && (
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
-            <div style={{ fontSize: 10, fontWeight: 900, color: '#FC8019', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: 12 }}>Deterministic Lifecycle Infrastructure</div>
-            <h1 style={{ fontSize: 40, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.03em' }}>A-TROS v3.0 Deployment</h1>
-            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 15 }}>Autonomous Commerce State Machine for Patent Verification</p>
+            <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Smart Recurring Order and Inventory Optimization Platform</h1>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 500 }}>Schedule recurring purchase, reserve inventory in advance and confirm your order with a single tap</p>
           </div>
         )}
 
@@ -399,7 +407,7 @@ export default function ShowcasePage() {
               
               <div style={{ background: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '24px 32px', display: 'flex', flexDirection: 'column', height: 600 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>A-TROS TERMINAL CONSOLE</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>EXECUTION CONSOLE</div>
                   <div style={{ fontSize: 9, color: '#00E676', fontWeight: 900 }}>SYSTEM ONLINE</div>
                 </div>
                 <div ref={scrollRef} style={{ height: 450, overflowY: 'auto', fontFamily: '"JetBrains Mono", monospace', fontSize: 11, lineHeight: 1.8 }}>
@@ -468,8 +476,8 @@ export default function ShowcasePage() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 900 }}>Schedule with A-TROS v3</div>
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Autonomous Recurring Lifecycle Management</div>
+                      <div style={{ fontSize: 14, fontWeight: 900 }}>Enable Smart Recurring Schedule</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Fully Autonomous Subscription Model</div>
                     </div>
                     <div style={{ fontSize: 18, transform: isScheduling ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }}>▼</div>
                   </div>

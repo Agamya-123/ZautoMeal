@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 /* ── SVG Icons ────────────────────────────────────────────── */
 const IcMoney   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>;
@@ -21,9 +22,10 @@ const mockOrders = [
   { id:'o4', type:'meal',    restaurant:'Burger King',     items:'Whopper',                     amount:249,  status:'DELIVERED', date:'Yesterday',   time:'1:00 PM'  },
 ];
 
-type Filter = 'all' | 'meal' | 'grocery';
+type Filter = 'all' | 'meal' | 'grocery' | 'pharmacy';
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter]       = useState<Filter>('all');
@@ -65,6 +67,7 @@ export default function DashboardPage() {
     .reduce((sum: number, s: any) => sum + (s.rawTotalAmount || 0) * 20, 0);
   const mealSpent    = estSpend('meal');
   const grocerySpent = estSpend('grocery');
+  const pharmacySpent = estSpend('pharmacy');
   const totalSpent   = estSpend(filter === 'all' ? 'all' : filter);
 
   const statCards = filter === 'all'
@@ -72,10 +75,10 @@ export default function DashboardPage() {
         { label:'Est. Monthly Spend', value:isLoading?'-':`₹${estSpend('all').toLocaleString()}`, icon:<IcMoney/>,  color:'#FC8019' },
         { label:'Meal Schedules',     value:isLoading?'-':`${schedules.filter(s=>s.type==='meal'&&s.status==='active').length}`, icon:<IcFork/>,   color:'#FF9A6C' },
         { label:'Grocery Schedules',  value:isLoading?'-':`${schedules.filter(s=>s.type==='grocery'&&s.status==='active').length}`, icon:<IcCart/>,   color:'#00E676' },
-        { label:'Hours Saved',        value:isLoading?'-':`${schedules.filter(s=>s.status==='active').length * 5}`,                icon:<IcClock/>,  color:'#87CEFF' },
+        { label:'Pharmacy Schedules', value:isLoading?'-':`${schedules.filter(s=>s.type==='pharmacy'&&s.status==='active').length}`, icon:<IcBox/>,    color:'#A78BFA' },
       ]
     : [
-        { label: filter==='meal' ? 'Est. Meal Spend/mo' : 'Est. Grocery Spend/mo', value:isLoading?'-':`₹${totalSpent.toLocaleString()}`, icon: filter==='meal'?<IcFork/>:<IcCart/>, color: filter==='meal'?'#FC8019':'#00E676' },
+        { label: filter==='meal' ? 'Est. Meal Spend/mo' : filter==='grocery' ? 'Est. Grocery Spend/mo' : 'Est. Pharmacy Spend/mo', value:isLoading?'-':`₹${totalSpent.toLocaleString()}`, icon: filter==='meal'?<IcFork/>:filter==='grocery'?<IcCart/>:<IcBox/>, color: filter==='meal'?'#FC8019':filter==='grocery'?'#00E676':'#A78BFA' },
         { label:'Active Schedules', value:isLoading?'-':`${filteredSchedules.filter((s:any)=>s.status==='active').length}`, icon:<IcCal/>,   color:'#87CEFF' },
         { label:'Recent Orders',    value:isLoading?'-':`${filteredOrders.length}`,                                          icon:<IcTruck/>, color:'#FF9A6C' },
         { label:'Hours Saved',      value:isLoading?'-':`${filteredSchedules.filter((s:any)=>s.status==='active').length * 5}`, icon:<IcClock/>, color:'#A78BFA' },
@@ -87,19 +90,19 @@ export default function DashboardPage() {
       {/* ── Header ───────────────────────────────────────── */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
         <div>
-          <h1 style={{ marginBottom:4 }}>Good afternoon, Agamya</h1>
+          <h1 style={{ marginBottom:4 }}>Good afternoon, {session?.user?.name?.split(' ')[0] || 'User'}</h1>
           <p style={{ fontSize:13 }}>Your automated food &amp; grocery hub</p>
         </div>
-        <button className="btn btn-primary hide-on-mobile" onClick={() => setShowModal(true)} style={{ gap:8 }}>
+        <button className="btn btn-primary hide-on-mobile" onClick={() => router.push('/dashboard/showcase')} style={{ gap:8 }}>
           <IcPlus /> New Schedule
         </button>
       </div>
 
       {/* ── Filter toggle ─────────────────────────────────── */}
       <div className="pill-toggle" style={{ marginBottom:24 }}>
-        {(['all','meal','grocery'] as Filter[]).map(f => (
+        {(['all','meal','grocery','pharmacy'] as Filter[]).map(f => (
           <button key={f} className={filter===f?'active':''} onClick={() => setFilter(f)}>
-            {f==='all' ? 'All' : f==='meal' ? 'Meals' : 'Groceries'}
+            {f==='all' ? 'All' : f==='meal' ? 'Meals' : f==='grocery' ? 'Groceries' : 'Pharmacy'}
           </button>
         ))}
       </div>
@@ -120,13 +123,15 @@ export default function DashboardPage() {
       {/* ── Spend split bar ──────────────────────────────── */}
       {filter === 'all' && (
         <div className="glass" style={{ borderRadius:12, padding:'12px 18px', marginBottom:24, display:'flex', alignItems:'center', gap:14 }}>
-          <span className="hide-on-mobile" style={{ fontSize:11, color:'var(--c-muted)', flexShrink:0, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>Spend</span>
+          <span className="hide-on-mobile" style={{ fontSize:11, color:'var(--c-muted)', flexShrink:0, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>Spend Split</span>
           <div style={{ flex:1, height:5, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', display:'flex' }}>
-            <div style={{ width:`${(mealSpent/(mealSpent+grocerySpent))*100}%`, background:'linear-gradient(90deg,#FC8019,#FF9A6C)', borderRadius:'3px 0 0 3px', transition:'width 0.4s' }}/>
-            <div style={{ flex:1, background:'linear-gradient(90deg,#00B85A,#00E676)', borderRadius:'0 3px 3px 0' }}/>
+            <div style={{ width:`${(mealSpent/totalSpent)*100}%`, background:'linear-gradient(90deg,#FC8019,#FF9A6C)', borderRadius:'3px 0 0 3px', transition:'width 0.4s' }}/>
+            <div style={{ width:`${(grocerySpent/totalSpent)*100}%`, background:'linear-gradient(90deg,#00B85A,#00E676)', transition:'width 0.4s' }}/>
+            <div style={{ flex:1, background:'linear-gradient(90deg,#8B5CF6,#A78BFA)', borderRadius:'0 3px 3px 0' }}/>
           </div>
-          <span style={{ fontSize:12, color:'#FC8019', flexShrink:0, fontWeight:700 }}>₹{mealSpent.toLocaleString()} meals</span>
-          <span style={{ fontSize:12, color:'#00E676', flexShrink:0, fontWeight:700 }}>₹{grocerySpent.toLocaleString()} grocery</span>
+          <span style={{ fontSize:12, color:'#FC8019', flexShrink:0, fontWeight:700 }}>₹{mealSpent.toLocaleString()} M</span>
+          <span style={{ fontSize:12, color:'#00E676', flexShrink:0, fontWeight:700 }}>₹{grocerySpent.toLocaleString()} G</span>
+          <span style={{ fontSize:12, color:'#A78BFA', flexShrink:0, fontWeight:700 }}>₹{pharmacySpent.toLocaleString()} P</span>
         </div>
       )}
 
@@ -157,7 +162,8 @@ export default function DashboardPage() {
             ))
           ) : filteredSchedules.map(s => {
             const isGrocery = s.type === 'grocery';
-            const accent = isGrocery ? '#00E676' : '#FC8019';
+            const isPharmacy = s.type === 'pharmacy';
+            const accent = isPharmacy ? '#A78BFA' : (isGrocery ? '#00E676' : '#FC8019');
             return (
               <div key={s.id} className="sched-card">
                 <div style={{ display:'flex', alignItems:'center', gap:14, padding:'16px 20px' }}>
@@ -165,12 +171,12 @@ export default function DashboardPage() {
                   <div className="hide-on-mobile" style={{ width:3, height:40, borderRadius:3, background:accent, flexShrink:0 }}/>
                   {/* Icon */}
                   <div style={{ width:40, height:40, borderRadius:10, flexShrink:0, background:`${accent}14`, display:'flex', alignItems:'center', justifyContent:'center', color:accent, border:`1px solid ${accent}22` }}>
-                    {isGrocery ? <IcCart/> : <IcFork/>}
+                    {isPharmacy ? <IcBox/> : (isGrocery ? <IcCart/> : <IcFork/>)}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
                       <span style={{ fontWeight:600, fontSize:14 }}>{s.label}</span>
-                      <span className={`badge badge-${isGrocery?'success':'orange'} hide-on-mobile`}>{s.type}</span>
+                      <span className={`badge badge-${isPharmacy?'purple':(isGrocery?'success':'orange')} hide-on-mobile`}>{s.type}</span>
                     </div>
                     <div style={{ color:'var(--c-muted)', fontSize:12 }}>{s.restaurant} · {s.time} <span className="hide-on-mobile">· {s.days}</span></div>
                   </div>
@@ -218,8 +224,8 @@ export default function DashboardPage() {
             ))
           ) : filteredOrders.slice(0, 4).map((o: any) => (
             <div key={o.id} className="sched-card" style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr auto auto', gap:16, padding:'14px 16px', alignItems:'center' }}>
-              <div style={{ width:34, height:34, borderRadius:9, flexShrink:0, background: o.type==='MEAL'?'rgba(252,128,25,0.1)':'rgba(0,230,118,0.1)', display:'flex', alignItems:'center', justifyContent:'center', color: o.type==='MEAL'?'#FC8019':'#00E676', border:`1px solid ${o.type==='MEAL'?'rgba(252,128,25,0.2)':'rgba(0,230,118,0.2)'}` }}>
-                {o.type==='MEAL' ? <IcTruck/> : <IcBox/>}
+              <div style={{ width:34, height:34, borderRadius:9, flexShrink:0, background: o.type==='PHARMACY'?'rgba(167,139,250,0.1)':(o.type==='MEAL'?'rgba(252,128,25,0.1)':'rgba(0,230,118,0.1)'), display:'flex', alignItems:'center', justifyContent:'center', color: o.type==='PHARMACY'?'#A78BFA':(o.type==='MEAL'?'#FC8019':'#00E676'), border:`1px solid ${o.type==='PHARMACY'?'rgba(167,139,250,0.2)':(o.type==='MEAL'?'rgba(252,128,25,0.2)':'rgba(0,230,118,0.2)')}` }}>
+                {o.type==='PHARMACY' ? <IcBox/> : (o.type==='MEAL' ? <IcTruck/> : <IcBox/>)}
               </div>
               <div>
                 <div style={{ fontWeight:600, fontSize:13 }}>{o.vendorName}</div>

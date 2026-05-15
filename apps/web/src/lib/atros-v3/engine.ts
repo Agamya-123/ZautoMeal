@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-export const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 // ============================================================================
 // A-TROS v3.0 - WORKFLOW ENGINE (STRICT SYNC WITH SPEC)
@@ -58,6 +56,34 @@ export async function runAtrosPipelineV3(rio: any, userEmail?: string | null): P
   ATROS_V3_STATE.isRunning = true;
   ATROS_V3_STATE.no_response_preference = rio.schedule?.automationPreference || 'AUTO_EXECUTE';
   ATROS_V3_STATE.logs = [`[SYSTEM] A-TROS v3.0 INITIALIZED | FLOW_ID: ${rio.automation_id}`];
+  
+  let scheduleId: string | null = null;
+
+  // --- PERSIST SCHEDULE (For Billing/History visibility) ---
+  if (userEmail) {
+    try {
+      const user = await prisma.user.findUnique({ where: { email: userEmail } });
+      if (user) {
+        const newSchedule = await prisma.schedule.create({
+          data: {
+            userId: user.id,
+            type: rio.schedule?.type || 'MEAL',
+            name: `Smart Recurring Order: ${rio.schedule?.type || 'MEAL'}`,
+            time: rio.schedule?.time || '13:00',
+            days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'], // Full week for 'Daily'
+            restaurant: rio.schedule?.type === 'GROCERY' ? 'Instamart Express' : (rio.schedule?.type === 'PHARMACY' ? 'Apollo Pharmacy' : (rio.products?.split(',')[0] || 'Kitchen Hub')),
+            totalAmount: parseFloat(rio.schedule?.totalAmount || '450'),
+            items: rio.products ? { list: rio.products } : {},
+            isActive: true
+          }
+        });
+        scheduleId = newSchedule.id;
+        ATROS_V3_STATE.logs.push(`[SYSTEM] MANIFEST_PERSISTED: ${scheduleId}`);
+      }
+    } catch (dbErr) {
+      console.error('[A-TROS V3] Schedule Persistence Error:', dbErr);
+    }
+  }
   
   const setOS = (state: OS_STATE_V3) => {
     ATROS_V3_STATE.current_os = state;
@@ -206,8 +232,9 @@ export async function runAtrosPipelineV3(rio: any, userEmail?: string | null): P
           await prisma.order.create({
             data: {
               userId: user.id,
+              scheduleId: scheduleId, // Link to the schedule we created at start
               type: rio.schedule?.type || 'MEAL',
-              vendorName: rio.schedule?.type === 'GROCERY' ? 'A-TROS Grocery Mart' : 'A-TROS Kitchen Hub',
+              vendorName: rio.schedule?.type === 'GROCERY' ? 'Instamart Express' : (rio.schedule?.type === 'PHARMACY' ? 'Apollo Pharmacy' : 'Kitchen Distribution Hub'),
               amount: parseFloat(amountStr.toString()),
               status: 'DELIVERED',
               swiggyOrderId: rio.products || 'A-TROS Managed Items'

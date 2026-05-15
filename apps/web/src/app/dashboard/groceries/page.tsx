@@ -77,7 +77,7 @@ export default function GroceriesPage() {
     <div className="page-container" style={{ padding:'32px 36px' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:28 }}>
         <div><h1 style={{ marginBottom:4 }}>Grocery Schedules</h1><p style={{ fontSize:13 }}>Auto-deliver weekly or monthly groceries via Swiggy Instamart.</p></div>
-        <Link href="/dashboard/groceries/new" className="btn btn-green hide-on-mobile"><IcPlus/> New Grocery Schedule</Link>
+        <Link href="/dashboard/showcase" className="btn btn-green hide-on-mobile"><IcPlus/> New Grocery Schedule</Link>
       </div>
 
       {/* Stats */}
@@ -204,7 +204,7 @@ export default function GroceriesPage() {
               <div style={{width:40,height:40,borderRadius:10,background:'rgba(0,230,118,0.08)',display:'flex',alignItems:'center',justifyContent:'center',color:'#00E676',margin:'0 auto 12px'}}><IcPlus/></div>
               <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>Add another grocery schedule</div>
               <div style={{color:'var(--c-muted)',fontSize:12,marginBottom:16}}>Weekly veggies, monthly staples, or custom bundles.</div>
-              <Link href="/dashboard/groceries/new" className="btn btn-green" style={{fontSize:12}}><IcPlus/>Create Schedule</Link>
+              <Link href="/dashboard/showcase" className="btn btn-green" style={{fontSize:12}}><IcPlus/>Create Schedule</Link>
             </div>
           )}
         </div>
