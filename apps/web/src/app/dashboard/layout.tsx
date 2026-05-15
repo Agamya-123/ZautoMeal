@@ -222,23 +222,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
 
-      {/* ── Bottom Navigation (Mobile Only) ──────────────── */}
-      <nav className="show-flex-mobile bottom-nav" style={{ display: 'none' }}>
-        {[
-          { href: '/dashboard',           label: 'Home',      icon: 'grid' },
-          { href: '/dashboard/schedules', label: 'Meals',     icon: 'calendar' },
-          { href: '/dashboard/groceries', label: 'Groceries', icon: 'shopping' },
-          { href: '/dashboard/history',   label: 'History',   icon: 'history' },
-        ].map((item) => {
-          const isActive = item.href === '/dashboard' ? path === '/dashboard' : path.startsWith(item.href);
-          return (
-            <Link key={item.href} href={item.href} className={`bottom-nav-item ${isActive ? 'active' : ''}`}>
-              {Icons[item.icon as keyof typeof Icons]}
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      {/* ── Bottom Navigation Removed ──────────────── */}
+
     </div>
   );
 }

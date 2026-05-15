@@ -49,21 +49,39 @@ export default function LoginPage() {
               padding: '14px', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer',
               background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c-border)', color: 'var(--c-text)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              marginBottom: 12
             }}
             onMouseEnter={e => {
               e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
               e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)';
             }}
             onMouseLeave={e => {
               e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
               e.currentTarget.style.borderColor = 'var(--c-border)';
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = 'none';
             }}
           >
             <IcGoogle /> Continue with Google
+          </button>
+
+          <button 
+            onClick={() => signIn('credentials', { email: 'test@example.com', password: 'password', callbackUrl: '/dashboard' })}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+              padding: '14px', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer',
+              background: 'linear-gradient(135deg, rgba(252,128,25,0.2) 0%, rgba(211,84,0,0.1) 100%)', 
+              border: '1px solid rgba(252,128,25,0.3)', color: '#FC8019',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(252,128,25,0.3) 0%, rgba(211,84,0,0.2) 100%)';
+              e.currentTarget.style.borderColor = 'rgba(252,128,25,0.5)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(252,128,25,0.2) 0%, rgba(211,84,0,0.1) 100%)';
+              e.currentTarget.style.borderColor = 'rgba(252,128,25,0.3)';
+            }}
+          >
+            🚀 Continue as Test User
           </button>
 
           <div style={{ marginTop: 40, paddingTop: 32, borderTop: '1px solid var(--c-border)' }}>

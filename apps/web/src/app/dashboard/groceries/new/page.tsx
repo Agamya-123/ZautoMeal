@@ -29,16 +29,28 @@ export default function NewGrocerySchedulePage() {
     alertBefore: '1440',
   });
 
-  const selectedBundle = bundlePresets.find(b => b.id === form.bundleId);
-  const estTotal       = form.items.reduce((s) => s, 0); // placeholder — real prices from API
+  const [warehouse, setWarehouse] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    fetch('/api/warehouse')
+      .then(res => res.json())
+      .then(data => setWarehouse(data.catalog || []));
+  }, []);
+
+  const filteredWarehouse = warehouse.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
+    !form.items.includes(p.name)
+  ).slice(0, 8);
 
   const pickBundle = (b: typeof bundlePresets[0]) => {
     setForm(f => ({ ...f, bundleId: b.id, items: b.id === 'b6' ? [] : [...b.items] }));
   };
 
-  const addItem = () => {
-    if (!form.newItemText.trim()) return;
-    setForm(f => ({ ...f, items: [...f.items, f.newItemText.trim()], newItemText: '' }));
+  const addItem = (name?: string) => {
+    const text = name || form.newItemText.trim();
+    if (!text) return;
+    setForm(f => ({ ...f, items: [...f.items, text], newItemText: '' }));
   };
 
   const removeItem = (i: number) =>
@@ -91,93 +103,123 @@ export default function NewGrocerySchedulePage() {
 
       {/* ═══ STEP 1: Items & Bundle ══════════════════════════════════════ */}
       {step === 1 && (
-        <div>
-          {/* Schedule name */}
-          <div className="glass" style={{ borderRadius: 18, padding: '24px', marginBottom: 20 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>Schedule Name</div>
-            <input
-              placeholder="e.g. Monthly Kitchen Essentials, Weekly Veggies…"
-              value={form.label}
-              onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
-            />
-          </div>
-
-          {/* Bundle picker */}
-          <div className="glass" style={{ borderRadius: 18, padding: '24px', marginBottom: 20 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Start with a Bundle</div>
-            <div style={{ color: 'var(--brand-muted)', fontSize: 13, marginBottom: 16 }}>
-              Choose a preset to get started, or pick "Custom Bundle" to build from scratch.
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:20 }}>
+          <div>
+            {/* Schedule name */}
+            <div className="glass" style={{ borderRadius: 18, padding: '24px', marginBottom: 20 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>Schedule Name</div>
+              <input
+                placeholder="e.g. Monthly Kitchen Essentials, Weekly Veggies…"
+                value={form.label}
+                onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
+              />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 12 }}>
-              {bundlePresets.map(b => {
-                const selected = form.bundleId === b.id;
-                return (
-                  <button key={b.id} onClick={() => pickBundle(b)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-                    borderRadius: 12, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
-                    background: selected ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: selected ? '1px solid rgba(34,197,94,0.5)' : '1px solid var(--brand-border)',
-                    color: 'var(--brand-text)',
-                  }}>
-                    <span style={{ fontSize: 26, flexShrink: 0 }}>{b.emoji}</span>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{b.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--brand-muted)', marginTop: 2 }}>
-                        {b.id === 'b6' ? 'Build your own' : `${b.items.length} items · ~₹${b.est}`}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Item editor */}
-          {form.bundleId && (
-            <div className="glass" style={{ borderRadius: 18, padding: '24px' }}>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
-                {selectedBundle?.id === 'b6' ? 'Add Your Items' : `Items in ${selectedBundle?.name}`}
-              </div>
+            {/* Bundle picker */}
+            <div className="glass" style={{ borderRadius: 18, padding: '24px', marginBottom: 20 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Start with a Bundle</div>
               <div style={{ color: 'var(--brand-muted)', fontSize: 13, marginBottom: 16 }}>
-                Customise this list — add or remove anything.
+                Choose a preset to get started, or pick "Custom Bundle".
               </div>
-
-              {/* Items list */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 8, marginBottom: 16 }}>
-                {form.items.map((item, i) => (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '10px 14px', borderRadius: 10,
-                    background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)',
-                  }}>
-                    <span style={{ fontSize: 13 }}>{item}</span>
-                    <button onClick={() => removeItem(i)} style={{ background: 'none', border: 'none', color: 'var(--brand-danger)', cursor: 'pointer', fontSize: 16, lineHeight: 1, marginLeft: 8 }}>✕</button>
-                  </div>
-                ))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+                {bundlePresets.map(b => {
+                  const selected = form.bundleId === b.id;
+                  return (
+                    <button key={b.id} onClick={() => pickBundle(b)} style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '12px',
+                      borderRadius: 12, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
+                      background: selected ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.04)',
+                      border: selected ? '1px solid rgba(34,197,94,0.5)' : '1px solid var(--brand-border)',
+                      color: 'var(--brand-text)',
+                    }}>
+                      <span style={{ fontSize: 20, flexShrink: 0 }}>{b.emoji}</span>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 12 }}>{b.name}</div>
+                        <div style={{ fontSize: 10, color: 'var(--brand-muted)' }}>
+                          {b.id === 'b6' ? 'Build' : `${b.items.length} items`}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Add item */}
-              <div style={{ display: 'flex', gap: 10 }}>
-                <input
-                  placeholder="Add item (e.g. Milk 2L, Rice 5kg…)"
-                  value={form.newItemText}
-                  onChange={e => setForm(f => ({ ...f, newItemText: e.target.value }))}
-                  onKeyDown={e => e.key === 'Enter' && addItem()}
-                  style={{ flex: 1 }}
-                />
-                <button onClick={addItem} className="btn btn-primary" style={{ padding: '0 20px', fontSize: 13, flexShrink: 0, background: 'linear-gradient(135deg,#22C55E,#4ADE80)', boxShadow: '0 4px 16px rgba(34,197,94,0.25)' }}>
-                  + Add
-                </button>
-              </div>
-
-              {form.items.length > 0 && (
-                <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                  <span style={{ color: 'var(--brand-muted)' }}>{form.items.length} item{form.items.length > 1 ? 's' : ''} in schedule</span>
-                  <strong style={{ color: '#22C55E' }}>Ready to go ✓</strong>
+            {/* Item editor */}
+            {form.bundleId && (
+              <div className="glass" style={{ borderRadius: 18, padding: '24px' }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
+                  {selectedBundle?.id === 'b6' ? 'Add Your Items' : `Items in ${selectedBundle?.name}`}
                 </div>
+                <div style={{ color: 'var(--brand-muted)', fontSize: 13, marginBottom: 16 }}>
+                  Customise this list — add or remove anything.
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                  {form.items.map((item, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '8px 12px', borderRadius: 10,
+                      background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)',
+                    }}>
+                      <span style={{ fontSize: 12 }}>{item}</span>
+                      <button onClick={() => removeItem(i)} style={{ background: 'none', border: 'none', color: 'var(--brand-danger)', cursor: 'pointer', fontSize: 14, marginLeft: 8 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <input
+                    placeholder="Add item..."
+                    value={form.newItemText}
+                    onChange={e => setForm(f => ({ ...f, newItemText: e.target.value }))}
+                    onKeyDown={e => e.key === 'Enter' && addItem()}
+                    style={{ flex: 1 }}
+                  />
+                  <button onClick={() => addItem()} className="btn btn-primary" style={{ padding: '0 20px', fontSize: 13, flexShrink: 0 }}>+ Add</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Warehouse Suggestions */}
+          <div className="glass" style={{ borderRadius: 18, padding: '24px', height:'fit-content' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
+              <span style={{ fontSize:18 }}>📦</span>
+              <div style={{ fontWeight:700, fontSize:15 }}>Warehouse Catalog</div>
+            </div>
+            
+            <input 
+              placeholder="Search warehouse..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ fontSize:12, padding:'8px 12px', marginBottom:16 }}
+            />
+
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {filteredWarehouse.map(p => (
+                <button 
+                  key={p.id}
+                  onClick={() => addItem(p.name)}
+                  style={{
+                    display:'flex', alignItems:'center', gap:10, padding:10, borderRadius:10,
+                    background:'rgba(255,255,255,0.03)', border:'1px solid var(--brand-border)',
+                    textAlign:'left', cursor:'pointer'
+                  }}
+                >
+                  <div style={{ width:8, height:8, borderRadius:'50%', background: p.in_stock ? '#00E676' : '#FF3B30' }} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:12, fontWeight:600 }}>{p.name}</div>
+                    <div style={{ fontSize:10, color:'var(--brand-muted)' }}>₹{p.price} · {p.brand}</div>
+                  </div>
+                  <span style={{ fontSize:14, color:'#22C55E' }}>+</span>
+                </button>
+              ))}
+              {filteredWarehouse.length === 0 && (
+                <div style={{ fontSize:12, color:'var(--brand-muted)', textAlign:'center', padding:'20px 0' }}>No matching items found</div>
               )}
             </div>
-          )}
+          </div>
         </div>
       )}
 

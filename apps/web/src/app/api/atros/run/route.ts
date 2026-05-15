@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const currentCatalog = getTrialWarehouse();
     const targetDate = date ? new Date(date) : new Date();
     
-    const outcome = await runAtrosPipeline(rio as RIO, targetDate, currentCatalog);
+    const outcome = await runAtrosPipeline(rio as RIO);
 
     return NextResponse.json({ 
       success: true, 

@@ -1,304 +1,243 @@
 import { PrismaClient } from '@prisma/client';
-import { TRIAL_WAREHOUSE } from './warehouse-catalog';
 
 export const prisma = new PrismaClient();
 
 // ============================================================================
-// HELPERS (NOTIFICATIONS & ALERTS)
+// A-TROS v2.0 - FULL STATE MACHINE (21 STATUSES)
 // ============================================================================
+export type OS_STATE = 
+  | 'CREATED'                   // RIO saved, job scheduled
+  | 'WAREHOUSE_NOTIFIED'        // Item flagged unavailable, alert sent
+  | 'INVENTORY_RESERVED'        // Procurement confirmed by warehouse
+  | 'SUBSTITUTE_SEARCH'         // Procurement failed, looking for alt
+  | 'INVENTORY_LOCKED'          // T-3hr reservation placed with provider
+  | 'SUBSTITUTE_FOUND'          // Valid alternative found in budget
+  | 'PARTIAL_ORDER_OPTION'      // No alt found, showing skip-item option
+  | 'USER_ACTION_PENDING'       // Notification sent, waiting for user
+  | 'SUBSTITUTE_ACCEPTED'       // User said yes to the alternative
+  | 'PARTIAL_EXECUTION'         // User said continue without the item
+  | 'CONFIRMATION_PENDING'      // T-60 notification sent
+  | 'REMINDER_SENT'             // T-10 reminder sent (no response yet)
+  | 'AUTO_EXECUTION'            // No response, auto-placing order
+  | 'PAYMENT_SUCCESS'           // Primary payment worked
+  | 'PAYMENT_WITH_BACKUP'       // Backup payment used
+  | 'PAYMENT_APPROVAL_REQUIRED' // Both payments failed, need user action
+  | 'EXECUTED'                  // Order placed with provider
+  | 'COMPLETED'                 // Done, next occurrence queued
+  | 'SKIPPED'                   // User skipped today
+  | 'ATROS_PAUSED'              // Automation paused
+  | 'EXIT_RIO';                 // Automation deleted
 
-async function logWarehouseAlert(id: string, name: string, reason: string) {
-  console.log(`[ALERT] Logging warehouse stockout for ${name}...`);
-  try {
-    // In a real app, this would be a DB call. In trial, we hit our own API.
-    await fetch('http://localhost:3000/api/warehouse', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        action: 'LOG_ALERT', 
-        alert: { id, name, reason, timestamp: new Date().toISOString() } 
-      })
-    });
-  } catch (e) {
-    console.error('Failed to log warehouse alert:', e);
-  }
-}
+// ============================================================================
+// GLOBAL TEST STATE (A-TROS v2.0)
+// ============================================================================
+export let ATROS_TEST_STATE: any = {
+  mode: true,
+  isRunning: false,
+  current_os: 'IDLE',
+  logs: [] as string[],
+  // Test Controls
+  injectedInventory: null,
+  injectedProcurement: null,
+  injectedSubFound: null,
+  injectedUserResponse: null,
+  injectedPayment: null,
+  brand_preferences: {} as Record<string, number>
+};
 
-async function sendWhatsAppNotification(userId: string, message: string) {
-  console.log(`\n📱 [WHATSAPP] To: ${userId} | Msg: ${message}\n`);
-  // For the demo, we just log this to the server console. 
-  // In production, this uses the Twilio / Meta API.
+export function updateTestState(newState: any) {
+  ATROS_TEST_STATE = { ...ATROS_TEST_STATE, ...newState };
 }
 
 // ============================================================================
 // TYPES & INTERFACES
 // ============================================================================
-
-export type Category =
-  | 'groceries' | 'pharmacy' | 'meals' | 'pet'
-  | 'office' | 'baby' | 'wellness' | 'household';
-
-export type Platform = 'swiggy' | 'blinkit' | 'zepto' | 'instamart';
-export type RiskLabel = 'HIGH' | 'LOW' | 'CRITICAL';
-export type SubTier = 1 | 2 | 3 | 4;
-export type UserDecision = 'CONFIRM' | 'SKIP' | 'EDIT' | 'RESCHEDULE' | 'TIMEOUT';
-export type OrderOutcome = 'SUCCESS' | 'PARTIAL' | 'SKIPPED' | 'FAILED';
-export type NotificationChannel = 'whatsapp' | 'push' | 'sms' | 'email';
-
 export interface RIOItem {
-  item_id:          string;
-  name:             string;
-  qty:              number;
-  preferred_brand:  string;
+  item_id: string;
+  name: string;
+  qty: number;
+  preferred_brand: string;
   last_known_price: number;
-  category_tags:    string[];
-  dietary_tags:     string[];
-  blacklisted_brands: string[];
 }
 
 export interface BudgetRules {
-  total_budget:       number;
-  per_item_cap:       number;
-  price_flex_pct:     number;
+  total_budget: number;
+  per_item_cap: number;
+  price_flex_pct: number;
   allow_other_brands: boolean;
-  continue_without:   boolean;
-  auto_accept_sub:    boolean;
-  budget_alert_pct:   number;
+  continue_without: boolean;
 }
 
 export interface RIO {
-  automation_id:      string;
-  user_id:            string;
-  category:           Category;
-  items:              RIOItem[];
-  frequency:          'daily' | 'weekly' | 'custom_cron';
-  cron_expression:    string;
-  delivery_time:      string;
-  timezone:           string;
-  platform:           Platform;
-  budget_rules:       BudgetRules;
-  notification_prefs: NotificationChannel[];
-  payment_primary:    string;
-  payment_backup:     string;
-  address_id:         string;
-  active:             boolean;
-  confidence_score:   number;
-  created_at:         Date;
-}
-
-export interface DemandMap {
-  sku_id:               string;
-  product_name:         string;
-  required_qty:         number;
-  recurring_users:      number;
-  delivery_date:        Date;
-  predicted_shortage:   boolean;
-  urgency:              RiskLabel;
-  action_deadline:      Date;
-  warehouse_zone:       string;
-}
-
-export interface SubstituteResult {
-  tier:           SubTier;
-  item:           Partial<RIOItem> & { price: number; item_id: string };
-  confidence:     number;
-  price_delta:    number;
-  delta_pct:      number;
-  source:         'brand_match' | 'history' | 'llm' | 'none';
-}
-
-export interface InventoryLock {
-  lock_id:        string;
-  sku_id:         string;
-  qty_locked:     number;
-  locked_for:     string[];
-  lock_type:      'RECURRING_RESERVED';
-  locked_at:      Date;
-  expires_at:     Date;
-  velocity_score: number;
-}
-
-export interface OutcomeLog {
-  user_id:           string;
-  rio_id:            string;
-  sku_id:            string;
-  original_item:     string;
-  substitute_offered?: string;
-  substitute_tier?:  SubTier;
-  user_choice:       'accept' | 'reject' | 'continue_without' | 'skip' | 'timeout';
-  stockout_occurred: boolean;
-  risk_score_at_time: number;
-  order_outcome:     OrderOutcome;
-  timestamp:         Date;
+  automation_id: string;
+  user_id: string;
+  category: string;
+  items: RIOItem[];
+  budget_rules: BudgetRules;
 }
 
 // ============================================================================
-// PART 4 — WAREHOUSE ENGINE
+// CORE PIPELINE (PURE LOGIC ENGINE)
 // ============================================================================
 
-export class WarehouseEngine {
-  static async aggregateDemand(skuId: string, deliveryDate: Date, warehouseZone: string): Promise<DemandMap> {
-    // In trial mode, we simulate aggregated demand
-    return {
-      sku_id: skuId,
-      product_name: skuId,
-      required_qty: 10,
-      recurring_users: 5,
-      delivery_date: deliveryDate,
-      predicted_shortage: true,
-      urgency: 'HIGH',
-      action_deadline: new Date(),
-      warehouse_zone: warehouseZone
-    };
+export async function runAtrosPipeline(rio: RIO): Promise<string> {
+  if (ATROS_TEST_STATE.isRunning) {
+    console.warn('[A-TROS] Pipeline already running. Ignoring request.');
+    return 'ALREADY_RUNNING';
   }
 
-  static async notifyAndAwaitProcurement(demand: DemandMap): Promise<boolean> {
-    console.log(`[WAREHOUSE] Checking stock for ${demand.sku_id}...`);
-    // Random failure for testing: 30% chance of stockout
-    const success = Math.random() > 0.3;
-    return success;
-  }
-}
+  ATROS_TEST_STATE.isRunning = true;
+  ATROS_TEST_STATE.logs = [`🚀 A-TROS EXECUTION START | ID: ${rio.automation_id}`];
+  
+  const setOS = (state: OS_STATE) => {
+    ATROS_TEST_STATE.current_os = state;
+    ATROS_TEST_STATE.logs.push(`[STATE] → ${state}`);
+  };
 
-// ============================================================================
-// PART 5 — SUBSTITUTION ENGINE (USES TRIAL WAREHOUSE)
-// ============================================================================
+  try {
+    // NODE 1 — CREATED
+    setOS('CREATED');
+    await wait(800);
 
-export class SubstitutionEngine {
-  static checkBudgetWindow(candidatePrice: number, currentOrderTotal: number, originalPrice: number, rules: BudgetRules): boolean {
-    const min = originalPrice * (1 - rules.price_flex_pct / 100);
-    const max = originalPrice * (1 + rules.price_flex_pct / 100);
-    return (
-      candidatePrice >= min &&
-      candidatePrice <= max &&
-      candidatePrice <= rules.per_item_cap &&
-      (currentOrderTotal + candidatePrice) <= rules.total_budget
-    );
-  }
+    // NODE 2 — T-3 DAYS: INVENTORY CHECK
+    ATROS_TEST_STATE.logs.push(`🔍 Calling Provider API: check_inventory(${rio.items[0].name})...`);
+    const isAvailable = await pollTestControl('injectedInventory') === 'available';
 
-  static async findSubstitute(originalItem: RIOItem, currentOrderTotal: number, rules: BudgetRules, userId: string, warehouseCatalog?: any[]): Promise<SubstituteResult | null> {
-    const originalPrice = originalItem.last_known_price;
-    const catalog = warehouseCatalog || TRIAL_WAREHOUSE;
-
-    // Search in provided catalog
-    const candidates = catalog.filter(p => 
-      p.category === originalItem.category_tags[0] || 
-      p.tags.some(t => originalItem.category_tags.includes(t))
-    ).filter(p => p.id !== originalItem.item_id && p.in_stock);
-
-    // Tier 1: Same Brand (different SKU)
-    const tier1 = candidates.find(c => c.brand === originalItem.preferred_brand && this.checkBudgetWindow(c.price, currentOrderTotal, originalPrice, rules));
-    if (tier1) {
-      return { tier: 1, item: { ...tier1, item_id: tier1.id, qty: originalItem.qty }, confidence: 0.95, price_delta: tier1.price - originalPrice, delta_pct: ((tier1.price - originalPrice) / originalPrice) * 100, source: 'brand_match' };
-    }
-
-    // Tier 2: Different Brand, Same Category
-    const tier2 = candidates.find(c => this.checkBudgetWindow(c.price, currentOrderTotal, originalPrice, rules));
-    if (tier2) {
-      return { tier: 2, item: { ...tier2, item_id: tier2.id, qty: originalItem.qty }, confidence: 0.80, price_delta: tier2.price - originalPrice, delta_pct: ((tier2.price - originalPrice) / originalPrice) * 100, source: 'history' };
-    }
-
-    return null;
-  }
-
-  static async triggerUserNotification(rio: RIO, originalItem: RIOItem, substitute: SubstituteResult | null): Promise<UserDecision> {
-    const channel = rio.notification_prefs[0];
-    const message = substitute 
-      ? `OOS Alert: ${originalItem.name} is out. Switch to ${substitute.item.name} for ₹${substitute.item.price}?` 
-      : `OOS Alert: ${originalItem.name} is out and no substitute fits your budget.`;
-    
-    console.log(`[${channel.toUpperCase()}] Notification to ${rio.user_id}: ${message}`);
-    // In trial mode, we auto-confirm if auto_accept_sub is true, else mock CONFIRM
-    return 'CONFIRM';
-  }
-}
-
-// ============================================================================
-// PART 6 — EXECUTION ENGINE
-// ============================================================================
-
-export class ExecutionEngine {
-  static async requestConfirmation(rio: RIO): Promise<UserDecision> {
-    console.log(`[EXECUTE] T-60 Confirmation for ${rio.user_id}...`);
-    return 'CONFIRM';
-  }
-
-  static async executeOrder(rio: RIO, finalItems: any[]): Promise<{ success: boolean; order_id?: string }> {
-    console.log(`[EXECUTE] Firing ${rio.platform} order for ${rio.user_id}...`);
-    const orderId = `ORD-${Math.floor(Math.random() * 1000000)}`;
-    return { success: true, order_id: orderId };
-  }
-}
-
-// ============================================================================
-// CORE PIPELINE
-// ============================================================================
-
-export async function runAtrosPipeline(rio: RIO, targetDate: Date, warehouseCatalog?: any[]): Promise<OrderOutcome> {
-  const catalog = warehouseCatalog || TRIAL_WAREHOUSE;
-  console.log(`\n══════════════════════════════════════════════════════════════════════`);
-  console.log(`  A-TROS PIPELINE START | RIO: ${rio.automation_id} | User: ${rio.user_id}`);
-  console.log(`══════════════════════════════════════════════════════════════════════\n`);
-
-  let finalCart: any[] = [];
-  let budgetConsumed = 0;
-
-  for (const item of rio.items) {
-    console.log(`── Processing item: ${item.name} ──`);
-
-    // Check stock in the provided catalog with robust name matching
-    const warehouseItem = catalog.find(p => 
-      p.id === item.item_id || 
-      p.name.toLowerCase() === item.name.toLowerCase()
-    );
-    
-    // IF item is found in warehouse, use its real status. NO random fallbacks.
-    const inStock = warehouseItem ? warehouseItem.in_stock : true;
-
-    if (inStock) {
-      console.log(`[WAREHOUSE] ✅ ${item.name} is in stock.`);
-      finalCart.push({ ...item, price: item.last_known_price });
-      budgetConsumed += item.last_known_price * item.qty;
+    if (isAvailable) {
+      ATROS_TEST_STATE.logs.push(`✅ Item in stock. Proceeding to Lock window.`);
     } else {
-      console.log(`[RECOVERY] 🚨 ${item.name} is OUT OF STOCK. Triggering Recovery...`);
+      // NODE 2b — WAREHOUSE NOTIFIED
+      setOS('WAREHOUSE_NOTIFIED');
+      ATROS_TEST_STATE.logs.push(`⚠️ Item OUT OF STOCK. Alerting warehouse partner...`);
       
-      // 1. Alert Warehouse
-      await logWarehouseAlert(item.item_id || 'UNK', item.name, 'Stockout detected by A-TROS');
+      // NODE 3 — PROCUREMENT WINDOW (Wait for warehouse)
+      ATROS_TEST_STATE.logs.push(`⏳ Waiting for procurement confirmation (Window: 48hr simulated)...`);
+      const procResult = await pollTestControl('injectedProcurement');
 
-      // 2. Run Substitution Logic
-      const sub = await SubstitutionEngine.findSubstitute(item, budgetConsumed, rio.budget_rules, rio.user_id, catalog);
-      
-      if (sub) {
-        // 3. Notify User & WAIT for decision
-        const msg = `Zautomeal: ${item.name} is out. Switch to ${sub.item.name} (₹${sub.item.price})?`;
-        await sendWhatsAppNotification(rio.user_id, msg);
-
-        // For the trial/demo: We check if the RIO has auto_accept_sub turned on
-        // If not, we still return CONFIRM for the automated flow, but we'll 
-        // make the UI handle the "wait" state in the next step.
-        const decision = rio.budget_rules.auto_accept_sub ? 'CONFIRM' : 'CONFIRM'; 
-        
-        console.log(`[RECOVERY] Applying substitution: ${sub.item.name}`);
-        finalCart.push(sub.item);
-        budgetConsumed += sub.item.price * sub.item.qty;
+      if (procResult === 'confirmed') {
+        setOS('INVENTORY_RESERVED');
+        ATROS_TEST_STATE.logs.push(`✅ Warehouse confirmed stock arriving. Inventory Reserved.`);
       } else {
-        await sendWhatsAppNotification(rio.user_id, `Zautomeal Alert: ${item.name} is OOS. No substitute fits your budget.`);
-        if (!rio.budget_rules.continue_without) return 'FAILED';
+        // NODE 4 — SUBSTITUTION ENGINE
+        setOS('SUBSTITUTE_SEARCH');
+        ATROS_TEST_STATE.logs.push(`❌ Procurement FAILED. Searching for alternatives...`);
+        
+        const subFound = await pollTestControl('injectedSubFound');
+
+        if (subFound) {
+          setOS('SUBSTITUTE_FOUND');
+          ATROS_TEST_STATE.logs.push(`💬 Valid substitute found within budget (±${rio.budget_rules.price_flex_pct}%).`);
+          setOS('USER_ACTION_PENDING');
+          
+          const decision = await awaitUserDecision();
+          if (decision === 'SKIP') { 
+            setOS('SKIPPED'); 
+            ATROS_TEST_STATE.isRunning = false;
+            return 'SKIPPED'; 
+          }
+          if (decision === 'CONFIRM') {
+            setOS('SUBSTITUTE_ACCEPTED');
+            const brand = "Alternative Brand";
+            ATROS_TEST_STATE.brand_preferences[brand] = (ATROS_TEST_STATE.brand_preferences[brand] || 0) + 1;
+            ATROS_TEST_STATE.logs.push(`📈 Brand preference updated for ${brand}.`);
+          }
+        } else {
+          setOS('PARTIAL_ORDER_OPTION');
+          ATROS_TEST_STATE.logs.push(`⚠️ No substitutes fit budget rules.`);
+          setOS('USER_ACTION_PENDING');
+          
+          const decision = await awaitUserDecision();
+          if (decision === 'SKIP') { 
+            setOS('SKIPPED'); 
+            ATROS_TEST_STATE.isRunning = false;
+            return 'SKIPPED'; 
+          }
+          setOS('PARTIAL_EXECUTION');
+        }
       }
     }
+
+    // NODE 5 — T-3 HOURS: INVENTORY LOCK
+    setOS('INVENTORY_LOCKED');
+    ATROS_TEST_STATE.logs.push(`🔒 Units reserved with Provider API. Stock locked.`);
+    await wait(800);
+
+    // NODE 6 — T-60 CONFIRMATION
+    setOS('CONFIRMATION_PENDING');
+    ATROS_TEST_STATE.logs.push(`📱 T-60 Notification sent via WhatsApp...`);
+    
+    const finalConfirm = await awaitUserDecision();
+    if (finalConfirm === 'SKIP') { 
+      setOS('SKIPPED'); 
+      ATROS_TEST_STATE.isRunning = false;
+      return 'SKIPPED'; 
+    }
+    if (finalConfirm === 'TIMEOUT') {
+      setOS('REMINDER_SENT');
+      ATROS_TEST_STATE.logs.push(`🔔 T-10 Reminder sent.`);
+      await wait(1500);
+      setOS('AUTO_EXECUTION');
+      ATROS_TEST_STATE.logs.push(`🤖 No response. Auto-executing based on schedule.`);
+    }
+
+    // NODE 7 — EXECUTION + PAYMENT
+    const payResult = await pollTestControl('injectedPayment') || 'success';
+    if (payResult === 'success') {
+      setOS('PAYMENT_SUCCESS');
+    } else if (payResult === 'fail_primary') {
+      setOS('PAYMENT_WITH_BACKUP');
+      ATROS_TEST_STATE.logs.push(`⚠️ Primary Payment FAILED. Backup payment SUCCEEDED.`);
+    } else {
+      setOS('PAYMENT_APPROVAL_REQUIRED');
+      ATROS_TEST_STATE.logs.push(`❌ BOTH PAYMENTS FAILED. Manual intervention required.`);
+      ATROS_TEST_STATE.isRunning = false;
+      return 'FAILED';
+    }
+
+    setOS('EXECUTED');
+    ATROS_TEST_STATE.logs.push(`🚀 Order placed via Provider API.`);
+    await wait(1000);
+
+    // NODE 8 — COMPLETED
+    setOS('COMPLETED');
+    ATROS_TEST_STATE.logs.push(`✨ Execution finished. Next occurrence queued.`);
+    
+    ATROS_TEST_STATE.isRunning = false;
+    return 'SUCCESS';
+
+  } catch (error) {
+    console.error('[A-TROS] Pipeline Crash:', error);
+    ATROS_TEST_STATE.isRunning = false;
+    return 'FAILED';
   }
+}
 
-  if (finalCart.length === 0) return 'SKIPPED';
+// ============================================================================
+// HELPERS
+// ============================================================================
 
-  const confirmation = await ExecutionEngine.requestConfirmation(rio);
-  if (confirmation !== 'CONFIRM') return 'SKIPPED';
+async function wait(ms: number) {
+  return new Promise(r => setTimeout(r, ms));
+}
 
-  const result = await ExecutionEngine.executeOrder(rio, finalCart);
-  
-  console.log(`\n══════════════════════════════════════════════════════════════════════`);
-  console.log(`  A-TROS PIPELINE COMPLETE | Outcome: ${result.success ? 'SUCCESS' : 'FAILED'}`);
-  console.log(`  Items: ${finalCart.length} | Total: ₹${budgetConsumed}`);
-  console.log(`══════════════════════════════════════════════════════════════════════\n`);
+async function pollTestControl(field: string): Promise<any> {
+  while (true) {
+    if (ATROS_TEST_STATE[field] !== null) {
+      const val = ATROS_TEST_STATE[field];
+      ATROS_TEST_STATE[field] = null; // Clear it
+      return val;
+    }
+    await wait(400); // Check every 400ms
+  }
+}
 
-  return result.success ? 'SUCCESS' : 'FAILED';
+async function awaitUserDecision(): Promise<string> {
+  while (true) {
+    if (ATROS_TEST_STATE.injectedUserResponse) {
+      const res = ATROS_TEST_STATE.injectedUserResponse;
+      ATROS_TEST_STATE.injectedUserResponse = null;
+      return res;
+    }
+    await wait(400);
+  }
 }
