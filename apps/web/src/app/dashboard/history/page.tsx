@@ -46,12 +46,12 @@ export default function HistoryPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/orders').then(r => r.json()),
-      fetch('/api/schedules').then(r => r.json()),
+      fetch('/api/orders').then(r => r.ok ? r.json() : { orders: [] }).catch(() => ({ orders: [] })),
+      fetch('/api/schedules').then(r => r.ok ? r.json() : { schedules: [] }).catch(() => ({ schedules: [] })),
     ]).then(([ordData, schedData]) => {
       setTimeout(() => {
-        if (ordData.orders) setOrders(ordData.orders);
-        if (schedData.schedules) setSchedules(schedData.schedules);
+        if (ordData && ordData.orders) setOrders(ordData.orders);
+        if (schedData && schedData.schedules) setSchedules(schedData.schedules);
         setIsLoading(false);
       }, 800);
     }).catch(() => setIsLoading(false));

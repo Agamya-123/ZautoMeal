@@ -21,18 +21,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Simple bypass for testing
         if (!credentials?.email) return null;
-        
-        // HARDCORE BYPASS: If test user, don't even touch the DB if it might be down
-        if (credentials.email === 'test@example.com') {
-          return {
-            id: 'test-user-id',
-            email: 'test@example.com',
-            name: 'Test User (Offline)',
-          };
-        }
-
         try {
           let user = await prisma.user.findUnique({
             where: { email: credentials.email }
@@ -42,7 +31,8 @@ export const authOptions: NextAuthOptions = {
             user = await prisma.user.create({
               data: {
                 email: credentials.email,
-                name: 'Test User',
+                name: credentials.email === 'test@example.com' ? 'Autonomous Demo User' : 'Test User',
+                image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo-user'
               }
             });
           }
@@ -51,9 +41,10 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.name,
+            image: (user as any).image,
           };
         } catch (e) {
-          console.error('Database connection failed during login, but allowing test bypass.');
+          console.error('Database connection failed during login.');
           return null;
         }
       }

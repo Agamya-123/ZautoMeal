@@ -12,8 +12,16 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type'); // "MEAL" or "GROCERY"
 
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  let user = await prisma.user.findUnique({ where: { email: session.user.email } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: session.user.email,
+        name: session.user.name || 'Demo User',
+        image: (session.user as any).image || null
+      }
+    });
+  }
 
   const schedules = await prisma.schedule.findMany({
     where: { 
@@ -32,8 +40,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  let user = await prisma.user.findUnique({ where: { email: session.user.email } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: session.user.email,
+        name: session.user.name || 'Demo User',
+        image: (session.user as any).image || null
+      }
+    });
+  }
 
   try {
     const data = await req.json();

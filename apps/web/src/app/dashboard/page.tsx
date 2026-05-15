@@ -35,11 +35,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/schedules').then(r => r.json()),
-      fetch('/api/orders').then(r => r.json()),
+      fetch('/api/schedules').then(r => r.ok ? r.json() : { schedules: [] }).catch(() => ({ schedules: [] })),
+      fetch('/api/orders').then(r => r.ok ? r.json() : { orders: [] }).catch(() => ({ orders: [] })),
     ]).then(([schedData, ordData]) => {
       setTimeout(() => {
-        if (schedData.schedules) {
+        if (schedData && schedData.schedules) {
           setSchedules(schedData.schedules.map((s: any) => ({
             id: s.id,
             type: s.type.toLowerCase(),
@@ -52,9 +52,12 @@ export default function DashboardPage() {
             rawTotalAmount: s.totalAmount || 0,
           })));
         }
-        if (ordData.orders) setOrders(ordData.orders);
+        if (ordData && ordData.orders) setOrders(ordData.orders);
         setIsLoading(false);
       }, 800);
+    }).catch(err => {
+      console.error("Dashboard fetch error:", err);
+      setIsLoading(false);
     });
   }, []);
 

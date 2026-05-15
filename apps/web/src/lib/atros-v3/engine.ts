@@ -62,7 +62,16 @@ export async function runAtrosPipelineV3(rio: any, userEmail?: string | null): P
   // --- PERSIST SCHEDULE (For Billing/History visibility) ---
   if (userEmail) {
     try {
-      const user = await prisma.user.findUnique({ where: { email: userEmail } });
+      let user = await prisma.user.findUnique({ where: { email: userEmail } });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email: userEmail,
+            name: userEmail === 'test@example.com' ? 'Autonomous Demo User' : 'Demo User',
+            image: userEmail === 'test@example.com' ? 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo-user' : null
+          }
+        });
+      }
       if (user) {
         const newSchedule = await prisma.schedule.create({
           data: {

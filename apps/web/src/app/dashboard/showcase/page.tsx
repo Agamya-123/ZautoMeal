@@ -119,6 +119,14 @@ export default function ShowcasePage() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [testState.logs]);
 
+  const selectCategory = (catId: string | null) => {
+    if (catId !== selectedCategory) {
+      setCart([]);
+      setSearchQuery("");
+    }
+    setSelectedCategory(catId);
+  };
+
   useEffect(() => {
     if (cart.length === 0 && showScheduleDrawer) {
       setShowScheduleDrawer(false);
@@ -277,7 +285,7 @@ export default function ShowcasePage() {
             {!selectedCategory ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
                 {categories.map(cat => (
-                  <div key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 50, cursor: 'pointer', transition: '0.3s', textAlign: 'center' }}>
+                  <div key={cat.id} onClick={() => selectCategory(cat.id)} style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 50, cursor: 'pointer', transition: '0.3s', textAlign: 'center' }}>
                     <div style={{ fontSize: 10, fontWeight: 900, color: cat.color, marginBottom: 20, letterSpacing: '0.1em' }}>{cat.tag}</div>
                     <h3 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{cat.name}</h3>
                     <div style={{ height: 1, width: 40, background: 'rgba(255,255,255,0.1)', margin: '20px auto' }} />
@@ -288,7 +296,7 @@ export default function ShowcasePage() {
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, gap: 24 }}>
-                  <button onClick={() => setSelectedCategory(null)} style={{ background: 'rgba(255,255,255,0.03)', border: 'none', color: 'rgba(255,255,255,0.6)', padding: '12px 24px', borderRadius: 8, fontSize: 10, fontWeight: 900, cursor: 'pointer', letterSpacing: '0.1em' }}>BACK TO MODULES</button>
+                  <button onClick={() => selectCategory(null)} style={{ background: 'rgba(255,255,255,0.03)', border: 'none', color: 'rgba(255,255,255,0.6)', padding: '12px 24px', borderRadius: 8, fontSize: 10, fontWeight: 900, cursor: 'pointer', letterSpacing: '0.1em' }}>BACK TO MODULES</button>
                   <input type="text" placeholder={`Search Category ${selectedCategory.toUpperCase()}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ flex: 1, padding: '14px 24px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#FFF', fontSize: 13, fontWeight: 700, fontFamily: 'monospace' }} />
                   <div style={{ minWidth: 100, textAlign: 'right' }}>
                     <span style={{ fontSize: 9, fontWeight: 900, color: '#FC8019', display: 'block', letterSpacing: '0.1em' }}>BUNDLE TOTAL</span>
