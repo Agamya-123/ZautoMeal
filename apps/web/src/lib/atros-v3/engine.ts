@@ -52,7 +52,7 @@ export function updateV3State(newState: any) {
 // CORE PIPELINE V3
 // ============================================================================
 
-export async function runAtrosPipelineV3(rio: any): Promise<string> {
+export async function runAtrosPipelineV3(rio: any, userEmail?: string | null): Promise<string> {
   if (ATROS_V3_STATE.isRunning) return 'ALREADY_RUNNING';
   
   ATROS_V3_STATE.isRunning = true;
@@ -194,6 +194,30 @@ export async function runAtrosPipelineV3(rio: any): Promise<string> {
 
     setOS('COMPLETED');
     ATROS_V3_STATE.logs.push(`[SYSTEM] WORKFLOW_COMPLETE: DATA_PERSISTED`);
+
+    // --- PERSIST TO DATABASE ---
+    if (userEmail) {
+      try {
+        const user = await prisma.user.findUnique({ where: { email: userEmail } });
+        if (user) {
+          // Calculate total from products string or default
+          const amountStr = rio.schedule?.totalAmount || 450; 
+          
+          await prisma.order.create({
+            data: {
+              userId: user.id,
+              type: rio.schedule?.type || 'MEAL',
+              vendorName: rio.schedule?.type === 'GROCERY' ? 'A-TROS Grocery Mart' : 'A-TROS Kitchen Hub',
+              amount: parseFloat(amountStr.toString()),
+              status: 'DELIVERED',
+              swiggyOrderId: rio.products || 'A-TROS Managed Items'
+            }
+          });
+        }
+      } catch (dbErr) {
+        console.error('[A-TROS V3] DB Persistence Error:', dbErr);
+      }
+    }
     
     ATROS_V3_STATE.isRunning = false;
     return 'SUCCESS';

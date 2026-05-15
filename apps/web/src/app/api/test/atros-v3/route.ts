@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { updateV3State, ATROS_V3_STATE, runAtrosPipelineV3 } from '@/lib/atros-v3/engine';
 
 export async function GET() {
@@ -9,8 +11,10 @@ export async function POST(req: Request) {
   const { action, value, rio } = await req.json();
 
   if (action === 'RUN_PIPELINE') {
+    const session = await getServerSession(authOptions);
+    const userEmail = session?.user?.email;
     // Run in background
-    runAtrosPipelineV3(rio);
+    runAtrosPipelineV3(rio, userEmail);
     return NextResponse.json({ success: true });
   }
 

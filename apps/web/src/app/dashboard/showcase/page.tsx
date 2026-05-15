@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function ShowcasePage() {
+  const router = useRouter();
   const [activeStep, setActiveStep] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<any[]>([]);
@@ -409,7 +411,12 @@ export default function ShowcasePage() {
                   })}
                   {testState.isRunning && (testState.current_os === 'PAYMENT_PENDING' || testState.current_os === 'CONFIRMATION_PENDING' || testState.current_os === 'T30_CONFIRMATION_PENDING') && <div style={{ color: '#FC8019', marginTop: 10, animation: 'pulse 1s infinite', fontWeight: 700 }}>{`> AWAITING USER INTERACTION...`}</div>}
                 </div>
-                {!testState.isRunning && <button onClick={() => { setActiveStep(1); setSelectedCategory(null); setCart([]); setTestState({ logs: [], current_os: 'IDLE', isRunning: false }); setIsScheduling(false); }} style={{ width: '100%', marginTop: 'auto', padding: '16px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', color: '#FFF', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 900, fontSize: 10, cursor: 'pointer', letterSpacing: '0.1em' }}>RESTART SYSTEM</button>}
+                {!testState.isRunning && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+                    <button onClick={() => { setActiveStep(1); setSelectedCategory(null); setCart([]); setTestState({ logs: [], current_os: 'IDLE', isRunning: false }); setIsScheduling(false); }} style={{ padding: '14px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', color: '#FFF', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 900, fontSize: 10, cursor: 'pointer', letterSpacing: '0.1em' }}>RESTART SYSTEM</button>
+                    <button onClick={() => router.push('/dashboard/billing')} style={{ padding: '14px', borderRadius: 8, background: '#FC8019', color: '#FFF', border: 'none', fontWeight: 900, fontSize: 10, cursor: 'pointer', letterSpacing: '0.1em' }}>VIEW IN BILLING</button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
